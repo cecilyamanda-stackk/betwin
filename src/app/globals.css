@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-text-primary antialiased;
+  }
+
+  ::selection {
+    @apply bg-gold text-background;
+  }
+
+  /* Visible keyboard focus everywhere, per accessibility requirement */
+  :focus-visible {
+    outline: 2px solid #f4c430;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-pill border border-border px-3.5 py-1.5 text-sm font-medium text-text-secondary transition-colors;
+  }
+
+  .pill-selected {
+    @apply bg-gold text-background border-gold;
+  }
+
+  .card {
+    @apply rounded-card border border-border bg-surface shadow-card;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md bg-gold px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-gold-hover disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-md border border-border bg-surface-secondary px-4 py-2 text-sm font-semibold text-text-primary transition-colors hover:border-gold/50 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .live-badge {
+    @apply inline-flex items-center gap-1.5 rounded-pill bg-live/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-live;
+  }
+
+  .live-dot {
+    @apply h-1.5 w-1.5 rounded-full bg-live;
+    animation: pulse-dot 1.6s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
+}
+
+@layer components {
+  .modal-in {
+    animation: modal-in 0.16s ease-out;
+  }
+
+  @keyframes modal-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-in {
+    animation: none;
+  }
+}
