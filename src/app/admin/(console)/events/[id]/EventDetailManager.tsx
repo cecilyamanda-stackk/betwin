@@ -8,6 +8,7 @@ import { EventStatusBadge } from "@/components/admin/EventStatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { AdminForm, AdminSelect } from "@/components/admin/AdminForm";
 import { FormField } from "@/components/ui/FormField";
+import { useAdminBreadcrumbLabel } from "@/components/admin/AdminBreadcrumbContext";
 import {
   updateEvent,
   updateEventStatus,
@@ -133,6 +134,8 @@ export function EventDetailManager({
   teams: Team[];
 }) {
   const router = useRouter();
+
+  useAdminBreadcrumbLabel(event.id, `${event.homeTeamName} vs ${event.awayTeamName}`);
 
   // Edit-details modal
   const [editOpen, setEditOpen] = useState(false);

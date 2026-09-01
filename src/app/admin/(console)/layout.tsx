@@ -2,6 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import { requireAdmin, UnauthorizedError, ForbiddenError } from "@/lib/auth/roles";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminBreadcrumbs } from "@/components/admin/AdminBreadcrumbs";
+import { AdminBreadcrumbProvider } from "@/components/admin/AdminBreadcrumbContext";
+import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 
 /**
  * Shared chrome for every authenticated admin page (dashboard, sports,
@@ -33,13 +36,17 @@ export default async function AdminConsoleLayout({ children }: { children: React
       >
         Skip to main content
       </a>
-      <AdminHeader displayName={profile.display_name ?? profile.username} role={profile.role} />
-      <div className="flex flex-1 overflow-hidden">
-        <AdminSidebar />
-        <main id="admin-main-content" tabIndex={-1} className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-[1200px] px-4 py-8 md:px-6">{children}</div>
-        </main>
-      </div>
+      <AdminBreadcrumbProvider>
+        <AdminHeader displayName={profile.display_name ?? profile.username} role={profile.role} />
+        <AdminBreadcrumbs />
+        <div className="flex flex-1 overflow-hidden">
+          <AdminSidebar />
+          <main id="admin-main-content" tabIndex={-1} className="flex-1 overflow-y-auto">
+            <div className="mx-auto max-w-[1200px] px-4 py-8 md:px-6">{children}</div>
+          </main>
+        </div>
+      </AdminBreadcrumbProvider>
+      <AdminCommandPalette />
     </div>
   );
 }

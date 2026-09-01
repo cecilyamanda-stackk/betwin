@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { submitManualDepositRequest, type ManualDepositRequestSummary } from "@/actions/wallet";
 import { isMpesaPaymentConfigured, type MpesaPaymentConfig } from "@/lib/mpesa";
+import { formatKES } from "@/lib/currency";
 
 const STATUS_STYLES: Record<ManualDepositRequestSummary["status"], string> = {
   PENDING: "text-gold",
@@ -26,11 +27,10 @@ const STATUS_STYLES: Record<ManualDepositRequestSummary["status"], string> = {
  * reusing one generic "business number" — Till (Buy Goods) is just a
  * number, Paybill needs a business number *and* an account number.
  *
- * Amounts here are shown without a currency symbol on purpose — M-Pesa
- * is KES-denominated, but the rest of this app displays "$" everywhere
- * (currency was one of Phase 0's still-unanswered questions). Asserting
- * KES here while the header/bet slip/etc. assert USD would just be a
- * second, quieter wrong answer instead of one obvious one.
+ * Amounts here are shown in KES throughout — M-Pesa is inherently
+ * KES-denominated, and the rest of this app (wallet balance, stakes,
+ * payouts) is now consistently KES too, so there's no mismatch to work
+ * around anymore.
  */
 export function MpesaDepositForm({
   config,
@@ -131,7 +131,7 @@ export function MpesaDepositForm({
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-text-secondary">Amount paid</span>
+            <span className="text-text-secondary">Amount paid (KES)</span>
             <input
               type="number"
               inputMode="decimal"
@@ -169,7 +169,7 @@ export function MpesaDepositForm({
                   <span className={`text-xs font-semibold uppercase ${STATUS_STYLES[r.status]}`}>{r.status}</span>
                 </div>
                 <p className="mt-0.5 text-xs text-text-secondary">
-                  {r.claimedAmount.toFixed(2)} · {new Date(r.createdAt).toLocaleDateString()}
+                  {formatKES(r.claimedAmount)} · {new Date(r.createdAt).toLocaleDateString()}
                 </p>
                 {r.status === "REJECTED" && r.adminNote && (
                   <p className="mt-1 text-xs text-live">{r.adminNote}</p>

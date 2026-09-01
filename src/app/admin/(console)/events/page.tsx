@@ -40,8 +40,6 @@ export default async function AdminEventsPage({
           awayTeamName: teamNameById.get(e.away_team_id) ?? "—",
           competitionName: competitionNameById.get(e.competition_id) ?? "—",
         }))}
-        competitions={competitions ?? []}
-        teams={teams ?? []}
       />
       <Pagination page={page} totalPages={computeTotalPages(count, DEFAULT_PAGE_SIZE)} basePath="/admin/events" />
     </div>

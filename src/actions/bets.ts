@@ -75,3 +75,97 @@ export async function placeBet(input: PlaceBetInput): Promise<ActionResult<Place
     },
   };
 }
+
+export interface PlaceAccumulatorBetInput {
+  selectionIds: string[];
+  stakeAmount: number;
+  /** Same reuse-on-retry convention as placeBet's idempotencyKey. */
+  idempotencyKey?: string;
+}
+
+export interface PlaceAccumulatorBetResult {
+  accumulatorBetId: string;
+  totalOdds: number;
+  potentialPayout: number;
+}
+
+/**
+ * Accumulator (multiples) placement — one stake across every selection
+ * in the slip, at their combined (multiplied) odds. Thin wrapper over
+ * place_accumulator_bet (see supabase/migrations/0018_accumulator_bets.sql),
+ * same reasoning as placeBet: the wallet debit and the bet/legs insert
+ * have to be one atomic unit, which only a security-definer RPC
+ * guarantees.
+ */
+export async function placeAccumulatorBet(
+  input: PlaceAccumulatorBetInput
+): Promise<ActionResult<PlaceAccumulatorBetResult>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "You need to be signed in to place a bet." };
+  if (!(input.stakeAmount > 0)) {
+    return { error: "Stake must be greater than zero." };
+  }
+  if (input.selectionIds.length < 2) {
+    return { error: "An accumulator needs at least 2 selections." };
+  }
+
+  const { data, error } = await supabase
+    .rpc("place_accumulator_bet", {
+      p_selection_ids: input.selectionIds,
+      p_stake_amount: input.stakeAmount,
+      p_idempotency_key: input.idempotencyKey ?? null,
+    })
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/", "layout"); // header balance display
+  revalidatePath("/account/history"); // bet history
+
+  return {
+    data: {
+      accumulatorBetId: data.accumulator_bet_id,
+      totalOdds: data.total_odds,
+      potentialPayout: data.potential_payout,
+    },
+  };
+}
+
+export interface CancelBetResult {
+  refundedAmount: number;
+}
+
+/**
+ * Lets a user undo a bet they didn't mean to place — most commonly the
+ * "placed it twice by mistake" case, where Active Bets previously gave
+ * them no way to fix it. Only reachable for a bet that's still PENDING
+ * on an event that hasn't started; see cancel_bet in
+ * supabase/migrations/0017_user_bet_cancellation.sql for the actual
+ * refund + wallet-rebalancing logic, which this is a thin wrapper over,
+ * same pattern as placeBet above.
+ */
+export async function cancelBet(betId: string): Promise<ActionResult<CancelBetResult>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "You need to be signed in to cancel a bet." };
+
+  const { data, error } = await supabase.rpc("cancel_bet", { p_bet_id: betId }).single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/", "layout"); // header balance display
+  revalidatePath("/account/history"); // Active Bets list
+
+  return { data: { refundedAmount: data.refunded_amount } };
+}

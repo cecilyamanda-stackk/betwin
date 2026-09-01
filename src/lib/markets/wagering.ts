@@ -65,3 +65,92 @@ export const OUTCOME_CODES_BY_MARKET_TYPE: Partial<
     { value: "DOUBLE_CHANCE_12", label: "Home or Away (12)" },
   ],
 };
+
+export interface MarketTemplateSelection {
+  name: string;
+  outcomeCode: SelectionOutcomeCode;
+}
+
+export interface MarketTemplateMarket {
+  name: string;
+  type: MarketType;
+  /** Suggested default — still editable in the wizard, since the real line varies match to match. */
+  lineValue?: number;
+  selections: MarketTemplateSelection[];
+}
+
+export interface MarketTemplate {
+  key: string;
+  label: string;
+  description: string;
+  markets: MarketTemplateMarket[];
+}
+
+/**
+ * "Create Game" wizard bundles (admin console). Each one pre-fills the
+ * market/selection *shape* — name, type, outcome code — so an admin only
+ * has to type in odds numbers instead of building every market and
+ * selection from scratch for the same handful of standard combinations
+ * every match uses. Odds and line values are never hard-coded here:
+ * that's real money, so the wizard always asks for them explicitly
+ * rather than shipping a plausible-looking default.
+ */
+export const MARKET_TEMPLATES: MarketTemplate[] = [
+  {
+    key: "soccer_standard",
+    label: "Soccer — standard 4",
+    description: "Match Winner (1X2), Over/Under, Both Teams to Score, Double Chance.",
+    markets: [
+      {
+        name: "Match Winner",
+        type: "MATCH_WINNER_3WAY",
+        selections: [
+          { name: "Home", outcomeCode: "HOME" },
+          { name: "Draw", outcomeCode: "DRAW" },
+          { name: "Away", outcomeCode: "AWAY" },
+        ],
+      },
+      {
+        name: "Over/Under",
+        type: "OVER_UNDER",
+        lineValue: 2.5,
+        selections: [
+          { name: "Over", outcomeCode: "OVER" },
+          { name: "Under", outcomeCode: "UNDER" },
+        ],
+      },
+      {
+        name: "Both Teams to Score",
+        type: "BOTH_TEAMS_TO_SCORE",
+        selections: [
+          { name: "Yes", outcomeCode: "BTTS_YES" },
+          { name: "No", outcomeCode: "BTTS_NO" },
+        ],
+      },
+      {
+        name: "Double Chance",
+        type: "DOUBLE_CHANCE",
+        selections: [
+          { name: "Home or Draw", outcomeCode: "DOUBLE_CHANCE_1X" },
+          { name: "Draw or Away", outcomeCode: "DOUBLE_CHANCE_X2" },
+          { name: "Home or Away", outcomeCode: "DOUBLE_CHANCE_12" },
+        ],
+      },
+    ],
+  },
+  {
+    key: "moneyline_2way",
+    label: "2-way — Moneyline",
+    description: "Basketball, tennis, or any sport with no draw.",
+    markets: [
+      {
+        name: "Moneyline",
+        type: "MONEYLINE",
+        selections: [
+          { name: "Home", outcomeCode: "HOME" },
+          { name: "Away", outcomeCode: "AWAY" },
+        ],
+      },
+    ],
+  },
+];

@@ -9,6 +9,9 @@ import { RealtimeRefresher } from "@/components/RealtimeRefresher";
 import { BRAND } from "@/lib/branding";
 import { createClient } from "@/lib/supabase/server";
 import { parseMpesaPaymentConfig } from "@/lib/mpesa";
+import { BetSlipProvider } from "@/components/betslip/BetSlipContext";
+import { BetSlipDesktopPanel } from "@/components/betslip/BetSlipDesktopPanel";
+import { BetSlipMobileStrip, BetSlipMobileSheet } from "@/components/betslip/BetSlipMobileStrip";
 
 interface RawLiveEvent {
   id: string;
@@ -121,14 +124,48 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           mpesaConfig={walletEnabled ? mpesaConfig : undefined}
         />
         {user && walletEnabled && <RealtimeRefresher table="wallets" filter={`user_id=eq.${user.id}`} />}
-        <div className="mx-auto flex w-full max-w-[1440px] flex-1">
-          <Sidebar />
-          <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 px-4 py-6 md:px-6">
-            {children}
-          </main>
-        </div>
-        <Footer />
-        <MobileNav />
+        {/*
+          Bet slip state is global (it has to survive navigating from the
+          homepage's Teams cards to an individual event and back), and on
+          large screens its panel needs to sit as a third column
+          alongside Sidebar + main — so the provider wraps the whole row,
+          not just `main`. Only mounted when wallet betting is actually
+          on, per the same reasoning as before: no bet-slip UI for a
+          deployment that hasn't turned wagering on yet.
+        */}
+        {walletEnabled ? (
+          <BetSlipProvider>
+            <div className="mx-auto flex w-full max-w-[1440px] flex-1">
+              <Sidebar />
+              {/*
+                Extra bottom padding below lg: the fixed MobileNav plus,
+                whenever there's an active bet, the yellow strip sitting
+                just above it would otherwise cover the last bit of page
+                content. Large screens don't have either fixed element in
+                this position, so they fall back to the normal py-6.
+              */}
+              <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 px-4 pb-36 pt-6 md:px-6 lg:pb-6">
+                {children}
+              </main>
+              <BetSlipDesktopPanel />
+            </div>
+            <Footer />
+            <MobileNav />
+            <BetSlipMobileStrip />
+            <BetSlipMobileSheet />
+          </BetSlipProvider>
+        ) : (
+          <>
+            <div className="mx-auto flex w-full max-w-[1440px] flex-1">
+              <Sidebar />
+              <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 px-4 py-6 md:px-6">
+                {children}
+              </main>
+            </div>
+            <Footer />
+            <MobileNav />
+          </>
+        )}
       </body>
     </html>
   );

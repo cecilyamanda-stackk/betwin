@@ -13,14 +13,19 @@ interface Tab {
  * server-side by the page and passed in as a node — this component only
  * owns which tab is active, so no client-side data fetching is needed.
  *
- * Only Overview and Predictions are wired up so far: Statistics, Lineups,
- * and Timeline have no backing schema yet (no stats/lineup/play-by-play
- * tables exist), and the project's rule is to never show a tab backed by
- * fake data. Add those tabs here once a later phase introduces real data
- * for them.
+ * Only Overview, Predictions, and (conditionally) Betting are wired up
+ * so far: Statistics, Lineups, and Timeline have no backing schema yet
+ * (no stats/lineup/play-by-play tables exist), and the project's rule is
+ * to never show a tab backed by fake data. Add those tabs here once a
+ * later phase introduces real data for them.
+ *
+ * initialTabId lets a link elsewhere in the app (e.g. the homepage odds
+ * board's "+N Markets") open straight to a specific tab via
+ * `?tab=betting` rather than landing on Overview and making the user
+ * click again.
  */
-export function EventTabs({ tabs }: { tabs: Tab[] }) {
-  const [activeId, setActiveId] = useState(tabs[0]?.id);
+export function EventTabs({ tabs, initialTabId }: { tabs: Tab[]; initialTabId?: string }) {
+  const [activeId, setActiveId] = useState(tabs.find((t) => t.id === initialTabId)?.id ?? tabs[0]?.id);
   const active = tabs.find((t) => t.id === activeId) ?? tabs[0];
 
   return (

@@ -36,8 +36,9 @@ export default async function AccountWalletPage() {
     supabase.from("wallets").select("withdrawable_cash, bonus_funds").eq("user_id", user.id).single(),
     supabase
       .from("payment_methods")
-      .select("id, display_label")
+      .select("id, payment_method_token")
       .eq("user_id", user.id)
+      .eq("provider", "MPESA")
       .eq("active", true)
       .order("created_at"),
     supabase
@@ -56,14 +57,13 @@ export default async function AccountWalletPage() {
   ]);
 
   const mpesaConfig = parseMpesaPaymentConfig(mpesaSetting?.value);
+  const mpesaMethods = methods ?? [];
 
-  const depositMethods = (methods ?? []).map((m) => ({ id: m.id, displayLabel: m.display_label }));
-
-  // Closed-loop rule for the dropdown itself (request_withdrawal enforces
-  // the same thing server-side regardless — this just avoids offering a
-  // method the request would immediately reject).
-  let withdrawEligibleMethods = depositMethods;
-  if (depositMethods.length > 0) {
+  // Closed-loop rule for the input's suggestions (request_withdrawal
+  // enforces the same thing server-side regardless — this just avoids
+  // suggesting a number the request would immediately reject).
+  let withdrawEligiblePhones: string[] = [];
+  if (mpesaMethods.length > 0) {
     const { data: completedDeposits } = await supabase
       .from("transactions")
       .select("payment_method_id")
@@ -72,10 +72,10 @@ export default async function AccountWalletPage() {
       .eq("status", "COMPLETED")
       .in(
         "payment_method_id",
-        depositMethods.map((m) => m.id)
+        mpesaMethods.map((m) => m.id)
       );
     const eligibleIds = new Set((completedDeposits ?? []).map((t) => t.payment_method_id));
-    withdrawEligibleMethods = depositMethods.filter((m) => eligibleIds.has(m.id));
+    withdrawEligiblePhones = mpesaMethods.filter((m) => eligibleIds.has(m.id)).map((m) => m.payment_method_token);
   }
 
   return (
@@ -94,7 +94,7 @@ export default async function AccountWalletPage() {
           adminNote: r.admin_note,
           createdAt: r.created_at,
         }))}
-        withdrawEligibleMethods={withdrawEligibleMethods}
+        withdrawEligiblePhones={withdrawEligiblePhones}
         pendingWithdrawals={(pendingWithdrawals ?? []).map((t) => ({
           id: t.id,
           amount: Math.abs(t.amount),

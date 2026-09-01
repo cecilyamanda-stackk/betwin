@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { AdminSelect } from "@/components/admin/AdminForm";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { updateUserRole, setUserSuspended } from "@/actions/admin/users";
+import { useAdminBreadcrumbLabel } from "@/components/admin/AdminBreadcrumbContext";
 import type { Role } from "@/types/database";
 
 interface Profile {
@@ -40,6 +41,9 @@ export function UserDetailManager({
   isSelf: boolean;
 }) {
   const router = useRouter();
+
+  useAdminBreadcrumbLabel(profile.id, profile.display_name ?? profile.username);
+
   const [role, setRole] = useState<Role>(profile.role);
   const [roleLoading, setRoleLoading] = useState(false);
   const [roleError, setRoleError] = useState<string | null>(null);

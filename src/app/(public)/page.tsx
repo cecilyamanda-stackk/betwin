@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 import { EventCard, type EventCardData } from "@/components/events/EventCard";
 import { LiveEventCard } from "@/components/events/LiveEventCard";
 import { LeaderboardTable, type LeaderboardRow } from "@/components/leaderboard/LeaderboardTable";
+import { TeamsGrid } from "@/components/betslip/TeamsGrid";
+import { getOddsBoardEvents } from "@/lib/oddsBoard";
 import type { EventStatus } from "@/types/database";
 
 interface RawEvent {
@@ -21,8 +23,14 @@ interface RawEvent {
 }
 
 /**
- * Homepage (section 11). Order: Live → Featured → Popular Competitions →
- * Upcoming → Leaderboard preview.
+ * Homepage (section 11). Order: Teams (bettable games) → Live →
+ * Featured → Popular Competitions → Upcoming → Leaderboard preview.
+ *
+ * "Teams" goes first, above even Live — it's the primary "do something"
+ * content once wallet betting is on, so a bettable game shouldn't be
+ * buried below sections built for the points game. It's gated on
+ * wallet_enabled and simply doesn't render when off or when no event has
+ * a fully-priced headline market yet (see getOddsBoardEvents).
  *
  * No "featured" flag exists on events yet, so "Featured Events" stands
  * in with the soonest published events, and "Upcoming Events" picks up
@@ -48,7 +56,7 @@ export default async function HomePage() {
     }
   }
 
-  const [{ data: liveRows }, { data: featuredRows }, { data: upcomingRows }, { data: competitions }, { data: scores }] =
+  const [{ data: liveRows }, { data: featuredRows }, { data: upcomingRows }, { data: competitions }, { data: scores }, { data: walletSetting }] =
     await Promise.all([
       supabase
         .from("events")
@@ -70,7 +78,11 @@ export default async function HomePage() {
         .range(3, 8),
       supabase.from("competitions").select("id, name, slug, country").eq("active", true).order("name").limit(6),
       supabase.from("leaderboard_scores").select("user_id, username, display_name, points_earned"),
+      supabase.from("platform_settings").select("value").eq("key", "wallet_enabled").single(),
     ]);
+
+  const walletEnabled = Boolean(walletSetting?.value ?? false);
+  const oddsBoardEvents = walletEnabled ? await getOddsBoardEvents(supabase) : [];
 
   const allEvents: RawEvent[] = [...(liveRows ?? []), ...(featuredRows ?? []), ...(upcomingRows ?? [])];
   const teamIds = [...new Set(allEvents.flatMap((e) => [e.home_team_id, e.away_team_id]))];
@@ -120,6 +132,12 @@ export default async function HomePage() {
     <div className="flex flex-col gap-8">
       {/* Keeps the Live Now rail's scores/status current without a manual reload (section 38). */}
       <RealtimeRefresher table="events" />
+      {oddsBoardEvents.length > 0 && (
+        <RealtimeRefresher
+          table="market_selections"
+          filter={`market_id=in.(${[...new Set(oddsBoardEvents.map((e) => e.marketId))].join(",")})`}
+        />
+      )}
 
       <section>
         <h1 className="font-display text-2xl font-bold">Welcome to {BRAND.name}</h1>
@@ -127,6 +145,12 @@ export default async function HomePage() {
           Predict match outcomes, climb the leaderboard, and follow live sports.
         </p>
       </section>
+
+      {oddsBoardEvents.length > 0 && (
+        <HomeSection title="Teams">
+          <TeamsGrid events={oddsBoardEvents} />
+        </HomeSection>
+      )}
 
       <HomeSection title="Live Now">
         {(liveRows ?? []).length === 0 ? (

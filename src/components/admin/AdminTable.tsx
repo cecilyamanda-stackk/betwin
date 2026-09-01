@@ -16,7 +16,14 @@ interface AdminTableProps<T> {
   emptyDescription?: string;
 }
 
-/** Shared list view for every /admin/* catalogue page (section 42). */
+/**
+ * Shared list view for every /admin/* catalogue page (section 42).
+ *
+ * Below `sm`, renders each row as a stacked label/value card instead of
+ * the table — same data, no sideways scrolling to read a status column.
+ * The table itself (with its `overflow-x-auto` wrapper) still renders at
+ * `sm+`, unchanged.
+ */
 export function AdminTable<T>({
   columns,
   rows,
@@ -30,35 +37,58 @@ export function AdminTable<T>({
   }
 
   return (
-    <div className="card overflow-x-auto p-0">
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-border text-xs uppercase tracking-wide text-text-secondary">
+    <>
+      <div className="flex flex-col gap-3 sm:hidden">
+        {rows.map((row) => (
+          <div
+            key={keyField(row)}
+            onClick={onRowClick ? () => onRowClick(row) : undefined}
+            className={`card flex flex-col gap-3 p-4 ${
+              onRowClick ? "cursor-pointer hover:border-gold/50" : ""
+            }`}
+          >
             {columns.map((col) => (
-              <th key={col.key} className={`px-4 py-3 font-medium ${col.className ?? ""}`}>
-                {col.label}
-              </th>
+              <div key={col.key} className="flex flex-col gap-0.5">
+                <span className="text-xs font-medium uppercase tracking-wide text-text-secondary">
+                  {col.label}
+                </span>
+                <div className={`text-sm text-text-primary ${col.className ?? ""}`}>{col.render(row)}</div>
+              </div>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr
-              key={keyField(row)}
-              onClick={onRowClick ? () => onRowClick(row) : undefined}
-              className={`border-b border-border/60 last:border-0 ${
-                onRowClick ? "cursor-pointer hover:bg-surface-secondary" : ""
-              }`}
-            >
+          </div>
+        ))}
+      </div>
+
+      <div className="card hidden overflow-x-auto p-0 sm:block">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-border text-xs uppercase tracking-wide text-text-secondary">
               {columns.map((col) => (
-                <td key={col.key} className={`px-4 py-3 text-text-primary ${col.className ?? ""}`}>
-                  {col.render(row)}
-                </td>
+                <th key={col.key} className={`px-4 py-3 font-medium ${col.className ?? ""}`}>
+                  {col.label}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr
+                key={keyField(row)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                className={`border-b border-border/60 last:border-0 ${
+                  onRowClick ? "cursor-pointer hover:bg-surface-secondary" : ""
+                }`}
+              >
+                {columns.map((col) => (
+                  <td key={col.key} className={`px-4 py-3 text-text-primary ${col.className ?? ""}`}>
+                    {col.render(row)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

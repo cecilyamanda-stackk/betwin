@@ -116,7 +116,7 @@ export async function submitManualDepositRequest(
 
 export interface RequestWithdrawalInput {
   amount: number;
-  paymentMethodId: string;
+  mpesaPhone: string;
 }
 
 export interface RequestWithdrawalResult {
@@ -130,9 +130,10 @@ export interface RequestWithdrawalResult {
  * user rather than needing a payment-processor confirmation step first:
  * it only moves a balance the user already has into escrow (pessimistic
  * — see request_withdrawal in the Phase 3 migration), it never creates
- * new funds. The closed-loop check (payout method must match a method
- * that funded a completed deposit) is enforced inside that same
- * function, not just here.
+ * new funds. M-Pesa is the only payout option for now, so this takes a
+ * phone number directly rather than a stored "payment method" — the
+ * closed-loop check (that number must match one that funded a completed
+ * deposit) is enforced inside request_withdrawal itself, not just here.
  */
 export async function requestWithdrawal(
   input: RequestWithdrawalInput
@@ -146,11 +147,14 @@ export async function requestWithdrawal(
   if (!(input.amount > 0)) {
     return { error: "Withdrawal amount must be greater than zero." };
   }
+  if (!input.mpesaPhone.trim()) {
+    return { error: "Enter the M-Pesa number to send the withdrawal to." };
+  }
 
   const { data, error } = await supabase
     .rpc("request_withdrawal", {
       p_amount: input.amount,
-      p_payment_method_id: input.paymentMethodId,
+      p_mpesa_phone: input.mpesaPhone.trim(),
     })
     .single();
 

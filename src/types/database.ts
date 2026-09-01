@@ -390,6 +390,95 @@ export interface Database {
         };
         Relationships: [];
       };
+      // Accumulator (multiples) betting — combines several selections from
+      // different matches into one stake at combined odds. Rows are only
+      // ever written by place_accumulator_bet / finalize_accumulator_bets
+      // (see 0018_accumulator_bets.sql) — no insert/update policy exists
+      // for a direct client write, same trust boundary as `bets`.
+      accumulator_bets: {
+        Row: {
+          id: string;
+          user_id: string;
+          stake_amount: number;
+          total_odds_at_placement: number;
+          // Generated column (stake_amount * total_odds_at_placement).
+          potential_payout: number;
+          status: BetStatus;
+          settled_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          stake_amount: number;
+          total_odds_at_placement: number;
+          status?: BetStatus;
+          settled_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          status?: BetStatus;
+          settled_at?: string | null;
+          total_odds_at_placement?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      accumulator_bet_legs: {
+        Row: {
+          id: string;
+          accumulator_bet_id: string;
+          event_id: string;
+          market_id: string;
+          selection_id: string;
+          odds_at_placement: number;
+          status: BetStatus;
+          settled_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          accumulator_bet_id: string;
+          event_id: string;
+          market_id: string;
+          selection_id: string;
+          odds_at_placement: number;
+          status?: BetStatus;
+          settled_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          status?: BetStatus;
+          settled_at?: string | null;
+        };
+        Relationships: [];
+      };
+      // Server-side bet slip cart (see 0019_bet_slip_persistence.sql) — a
+      // signed-in user's in-progress, not-yet-placed selections, so a
+      // refresh (or a different device) doesn't lose them. Unlike
+      // `bets`/`accumulator_bets` this *does* have direct client
+      // insert/update/delete RLS policies — nothing here moves money, it's
+      // just a cart, the same trust level as any other "my own draft data"
+      // table.
+      bet_slip_state: {
+        Row: {
+          user_id: string;
+          state: Record<string, unknown>;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          state?: Record<string, unknown>;
+          updated_at?: string;
+        };
+        Update: {
+          state?: Record<string, unknown>;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       // Wagering roadmap Phase 3. Rows are only ever written by the
       // place_bet / settle_bets_for_event / request_withdrawal /
       // resolve_withdrawal / adjust_wallet_balance functions — there's no
@@ -454,6 +543,7 @@ export interface Database {
           // Signed — see the column comment in the Phase 3 migration.
           amount: number;
           bet_id: string | null;
+          accumulator_bet_id: string | null;
           payment_method_id: string | null;
           idempotency_key: string | null;
           metadata: Record<string, unknown>;
@@ -466,6 +556,7 @@ export interface Database {
           status?: TransactionStatus;
           amount: number;
           bet_id?: string | null;
+          accumulator_bet_id?: string | null;
           payment_method_id?: string | null;
           idempotency_key?: string | null;
           metadata?: Record<string, unknown>;
@@ -776,10 +867,19 @@ export interface Database {
         };
         Returns: { bet_id: string; odds_at_placement: number; potential_payout: number }[];
       };
+      // Accumulator (multiples) betting — see 0018_accumulator_bets.sql.
+      place_accumulator_bet: {
+        Args: {
+          p_selection_ids: string[];
+          p_stake_amount: number;
+          p_idempotency_key?: string | null;
+        };
+        Returns: { accumulator_bet_id: string; total_odds: number; potential_payout: number }[];
+      };
       request_withdrawal: {
         Args: {
           p_amount: number;
-          p_payment_method_id: string;
+          p_mpesa_phone: string;
         };
         Returns: { transaction_id: string; status: TransactionStatus; estimated_processing_hours: number }[];
       };
@@ -804,6 +904,13 @@ export interface Database {
           p_event_id: string;
         };
         Returns: undefined;
+      };
+      // User-initiated bet cancellation (see 0017_user_bet_cancellation.sql).
+      cancel_bet: {
+        Args: {
+          p_bet_id: string;
+        };
+        Returns: { refunded_amount: number }[];
       };
       // Wagering roadmap Phase 6.
       set_deposit_limit: {

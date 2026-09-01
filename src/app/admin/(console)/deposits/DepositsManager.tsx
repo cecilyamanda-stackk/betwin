@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { resolveManualDepositRequest } from "@/actions/admin/wallet";
 import type { ManualDepositStatus } from "@/types/database";
+import { formatKES } from "@/lib/currency";
 
 interface DepositRow {
   id: string;
@@ -86,7 +87,7 @@ export function DepositsManager({ requests }: { requests: DepositRow[] }) {
                   </p>
                   <p className="text-xs text-text-secondary">
                     <span className="font-mono text-text-primary">{r.mpesaCode}</span> · {r.mpesaPhone} ·{" "}
-                    {r.claimedAmount.toFixed(2)} claimed
+                    {formatKES(r.claimedAmount)} claimed
                   </p>
                   <p className="text-xs text-text-secondary">{new Date(r.createdAt).toLocaleString()}</p>
                 </div>
@@ -124,7 +125,7 @@ export function DepositsManager({ requests }: { requests: DepositRow[] }) {
               <div key={r.id} className="card flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <p className="text-sm text-text-primary">
-                    {r.username} — <span className="font-mono">{r.mpesaCode}</span> — {r.claimedAmount.toFixed(2)}
+                    {r.username} — <span className="font-mono">{r.mpesaCode}</span> — {formatKES(r.claimedAmount)}
                   </p>
                   {r.adminNote && <p className="text-xs text-text-secondary">{r.adminNote}</p>}
                 </div>

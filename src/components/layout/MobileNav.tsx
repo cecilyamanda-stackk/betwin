@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Radio, Trophy, ListChecks, User } from "lucide-react";
+import { Home, Radio, Trophy, Receipt, User } from "lucide-react";
 
 const links = [
   { href: "/", label: "Home", icon: Home },
   { href: "/live", label: "Live", icon: Radio },
   { href: "/sports", label: "Sports", icon: Trophy },
-  { href: "/predictions", label: "Predictions", icon: ListChecks },
+  { href: "/account/history", label: "My Bets", icon: Receipt },
   { href: "/profile", label: "Profile", icon: User },
 ];
 

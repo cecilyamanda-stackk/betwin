@@ -1,20 +1,21 @@
 import Link from "next/link";
-import { Home, Radio, Star, Flame, Trophy, User, HelpCircle } from "lucide-react";
+import { Home, Radio, Star, Flame, Trophy, HelpCircle, Receipt, ListChecks, History, LayoutList, IdCard, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 const mainLinks = [
   { href: "/", label: "Home", icon: Home },
   { href: "/live", label: "Live Matches", icon: Radio },
+  { href: "/account/history", label: "My Bets", icon: Receipt },
   { href: "/featured", label: "Featured", icon: Star },
   { href: "/highlights", label: "Highlights", icon: Flame },
 ];
 
 const userLinks = [
-  { href: "/predictions", label: "My Predictions" },
-  { href: "/predictions/history", label: "Prediction History" },
-  { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/profile", label: "Profile" },
-  { href: "/account", label: "Account" },
+  { href: "/predictions", label: "My Predictions", icon: ListChecks },
+  { href: "/predictions/history", label: "Prediction History", icon: History },
+  { href: "/leaderboard", label: "Leaderboard", icon: LayoutList },
+  { href: "/profile", label: "Profile", icon: IdCard },
+  { href: "/account", label: "Account", icon: ShieldCheck },
 ];
 
 const supportLinks = [
@@ -78,7 +79,7 @@ export async function Sidebar() {
 
         <SidebarSection title="User">
           {userLinks.map((l) => (
-            <SidebarLink key={l.href} href={l.href} label={l.label} icon={User} />
+            <SidebarLink key={l.href} href={l.href} label={l.label} icon={l.icon} />
           ))}
         </SidebarSection>
 

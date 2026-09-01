@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useBetSlip } from "./BetSlipContext";
 import type { MarketType, SelectionOutcomeCode } from "@/types/database";
 
@@ -26,10 +27,24 @@ interface Market {
  * odds buttons (e.g. Home 1.85 / Draw 3.40 / Away 4.20 for 1X2), not
  * just a single 'predict' action like the current UI." One row per
  * wagering market; clicking a priced, active selection's odds button
- * adds/replaces that market's pick in the bet slip via BetSlipContext.
+ * becomes the single active bet in BetSlipContext, replacing whatever
+ * was selected before (see the context's own docs for why this is a
+ * one-at-a-time slip, not a cart).
  */
-export function EventOddsGrid({ markets, canBet }: { markets: Market[]; canBet: boolean }) {
-  const { toggleSelection, isSelected } = useBetSlip();
+export function EventOddsGrid({ markets, canBet, eventLabel }: { markets: Market[]; canBet: boolean; eventLabel: string }) {
+  const { toggleSelection, isSelected, reportLiveOdds } = useBetSlip();
+
+  // Odds-change detection: when this grid re-renders with fresh server
+  // data (via RealtimeRefresher -> router.refresh()), tell the cart what
+  // the current price actually is for anything it's holding. Harmless
+  // no-op for selections that aren't in the cart or haven't moved.
+  useEffect(() => {
+    for (const market of markets) {
+      for (const s of market.selections) {
+        if (s.current_odds !== null) reportLiveOdds(s.id, s.current_odds);
+      }
+    }
+  }, [markets, reportLiveOdds]);
 
   if (markets.length === 0) return null;
 
@@ -71,6 +86,7 @@ export function EventOddsGrid({ markets, canBet }: { markets: Market[]; canBet: 
                         marketName: market.name,
                         selectionId: s.id,
                         selectionLabel: s.value ? `${s.name} (${s.value})` : s.name,
+                        eventLabel,
                         odds: s.current_odds as number,
                       })
                     }

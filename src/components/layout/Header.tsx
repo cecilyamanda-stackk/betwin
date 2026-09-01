@@ -6,6 +6,7 @@ import { AuthButtons } from "./AuthButtons";
 import { SignOutButton } from "./SignOutButton";
 import { DepositButton } from "@/components/wallet/DepositButton";
 import type { MpesaPaymentConfig } from "@/lib/mpesa";
+import { formatKES } from "@/lib/currency";
 
 interface HeaderProps {
   /** Signed-in user's email, or null if signed out. Replaces the Login/Register buttons once set. */
@@ -51,7 +52,7 @@ export function Header({ userEmail, liveEvents = [], walletBalance, mpesaConfig 
               {walletBalance !== undefined && walletBalance !== null && mpesaConfig && (
                 <>
                   <span className="pill shrink-0 font-mono text-gold" title="Wallet balance">
-                    ${walletBalance.toFixed(2)}
+                    {formatKES(walletBalance)}
                   </span>
                   <DepositButton mpesaConfig={mpesaConfig} />
                 </>

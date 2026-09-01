@@ -117,7 +117,7 @@ export function ResponsibleGamblingForm({
         </p>
         <form onSubmit={handleSaveLimit} className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-text-secondary">Amount</span>
+            <span className="text-text-secondary">Amount (KES)</span>
             <input
               type="number"
               inputMode="decimal"

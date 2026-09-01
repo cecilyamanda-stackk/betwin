@@ -6,9 +6,7 @@ import { EventTabs } from "@/components/events/EventTabs";
 import { MarketPredictionCard } from "@/components/events/MarketPredictionCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RealtimeRefresher } from "@/components/RealtimeRefresher";
-import { BetSlipProvider } from "@/components/betslip/BetSlipContext";
 import { EventOddsGrid } from "@/components/betslip/EventOddsGrid";
-import { BetSlip } from "@/components/betslip/BetSlip";
 import { isWageringMarketType } from "@/lib/markets/wagering";
 import type { MarketType, SelectionOutcomeCode } from "@/types/database";
 
@@ -34,7 +32,13 @@ interface MyPredictionRow {
  * for why Statistics/Lineups/Timeline are left out until real data
  * exists for them.
  */
-export default async function EventPage({ params }: { params: { event: string } }) {
+export default async function EventPage({
+  params,
+  searchParams,
+}: {
+  params: { event: string };
+  searchParams: { tab?: string };
+}) {
   const supabase = await createClient();
 
   const { data: event } = await supabase
@@ -161,18 +165,22 @@ export default async function EventPage({ params }: { params: { event: string } 
   }));
 
   const bettingTab = (
-    <BetSlipProvider>
+    <div>
       {/* Odds moving (an admin re-pricing a selection) shouldn't need a
           manual reload while someone's mid-bet-slip. */}
       {marketIds.length > 0 && (
         <RealtimeRefresher table="market_selections" filter={`market_id=in.(${marketIds.join(",")})`} />
       )}
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <EventOddsGrid markets={wageringMarketsForGrid} canBet={canBet} />
-        <BetSlip />
-      </div>
+      <EventOddsGrid
+        markets={wageringMarketsForGrid}
+        canBet={canBet}
+        eventLabel={`${homeTeam?.name ?? "TBD"} vs ${awayTeam?.name ?? "TBD"}`}
+      />
       {!user && <p className="mt-3 text-xs text-text-secondary">Sign in to place a bet.</p>}
-    </BetSlipProvider>
+      <p className="mt-3 text-xs text-text-secondary">
+        Tap an odds button — your bet opens in the panel on the right (or the strip above the nav bar on a small screen).
+      </p>
+    </div>
   );
 
   return (
@@ -199,6 +207,7 @@ export default async function EventPage({ params }: { params: { event: string } 
             ? [{ id: "betting", label: "Betting", content: bettingTab }]
             : []),
         ]}
+        initialTabId={searchParams.tab}
       />
     </div>
   );

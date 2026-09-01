@@ -12,7 +12,7 @@ interface AccountSidebarProps {
 const BASE_LINKS = [
   { href: "/account", label: "Profile Info", icon: User },
   { href: "/account/wallet", label: "Wallet", icon: Wallet, requiresWallet: true },
-  { href: "/account/history", label: "Bet History", icon: History },
+  { href: "/account/history", label: "My Bets", icon: History },
   { href: "/account/responsible-gambling", label: "Responsible Gambling", icon: ShieldAlert },
   { href: "/account/security", label: "Security & 2FA", icon: Lock },
 ] as const;
