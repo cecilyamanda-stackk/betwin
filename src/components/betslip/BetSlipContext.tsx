@@ -182,6 +182,11 @@ export function BetSlipProvider({ children }: { children: React.ReactNode }) {
   const hydrated = useRef(false);
   const userIdRef = useRef<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+  // Flipped true by any add/remove/clear/mode-switch — anything that changes
+  // *which selections are in the slip*, as opposed to someone still typing a
+  // stake amount. Read (and reset) by the persistence effect below to decide
+  // whether to save right away or keep the normal typing debounce.
+  const structuralChange = useRef(false);
 
   // ── Hydrate once on mount: local cache first (so there's no flash of
   // empty state), then prefer the server's copy if a signed-in user has
@@ -240,10 +245,18 @@ export function BetSlipProvider({ children }: { children: React.ReactNode }) {
   }, [items.length]);
 
   // ── Persist on every change, once initial hydration has finished so
-  // this doesn't immediately stomp a just-loaded cart with an empty one. ─
+  // this doesn't immediately stomp a just-loaded cart with an empty one.
+  // Structural changes (a selection added/removed, slip cleared, tab
+  // switched) save right away — those are discrete clicks, not something
+  // that benefits from debouncing, and waiting risked a fast refresh
+  // catching storage still holding the pre-change state (see "Clear all"
+  // history below). Stake-amount typing stays debounced, since that fires
+  // on every keystroke and doesn't need a network round-trip each time. ─
   useEffect(() => {
     if (!hydrated.current) return;
     const snapshot = toPersisted(items, mode, accumulatorStake);
+    const delay = structuralChange.current ? 0 : 500;
+    structuralChange.current = false;
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       saveLocal(snapshot);
@@ -255,16 +268,48 @@ export function BetSlipProvider({ children }: { children: React.ReactNode }) {
       } else {
         supabase.from("bet_slip_state").upsert({ user_id: userId, state: snapshot as unknown as Record<string, unknown> });
       }
-    }, 500);
+    }, delay);
     return () => clearTimeout(saveTimer.current);
+  }, [items, mode, accumulatorStake]);
+
+  // ── Safety net for the debounce above: if the tab is about to close or
+  // go to background, don't leave a pending save sitting in the 500ms
+  // window — flush it now. Otherwise a refresh right after any change
+  // (not just clear) can catch storage still holding the previous state. ─
+  useEffect(() => {
+    function flushNow() {
+      if (!hydrated.current) return;
+      clearTimeout(saveTimer.current);
+      const snapshot = toPersisted(items, mode, accumulatorStake);
+      saveLocal(snapshot);
+      const userId = userIdRef.current;
+      if (!userId) return;
+      const supabase = createClient();
+      if (snapshot.items.length === 0) {
+        supabase.from("bet_slip_state").delete().eq("user_id", userId);
+      } else {
+        supabase.from("bet_slip_state").upsert({ user_id: userId, state: snapshot as unknown as Record<string, unknown> });
+      }
+    }
+    function handleVisibilityChange() {
+      if (document.visibilityState === "hidden") flushNow();
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", flushNow);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", flushNow);
+    };
   }, [items, mode, accumulatorStake]);
 
   const setMode = useCallback((next: BetSlipMode) => {
     modeManuallySet.current = true;
+    structuralChange.current = true;
     setModeState(next);
   }, []);
 
   const toggleSelection = useCallback<BetSlipContextValue["toggleSelection"]>((input) => {
+    structuralChange.current = true;
     setItems((prev) => {
       const existing = prev.find((i) => i.marketId === input.marketId);
       if (existing?.selectionId === input.selectionId) {
@@ -289,10 +334,12 @@ export function BetSlipProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeItem = useCallback((selectionId: string) => {
+    structuralChange.current = true;
     setItems((prev) => prev.filter((i) => i.selectionId !== selectionId));
   }, []);
 
   const clear = useCallback(() => {
+    structuralChange.current = true;
     setItems([]);
     setAccumulatorStake("");
     setAccumulatorStatus("idle");

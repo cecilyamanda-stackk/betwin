@@ -324,7 +324,7 @@ function SinglesTab() {
 
 /** Exactly one selection: no tabs (nothing to combine), just the plain single-bet form. */
 function SingleItemForm({ item }: { item: BetSlipItem }) {
-  const { setSingleStake, setItemResult, clear } = useBetSlip();
+  const { setSingleStake, setItemResult, removeItem, clear } = useBetSlip();
   const [submitting, setSubmitting] = useState(false);
 
   const stake = parsedStake(item.singleStake);
@@ -354,11 +354,25 @@ function SingleItemForm({ item }: { item: BetSlipItem }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="rounded-md border border-border p-3">
-        <p className="truncate text-xs text-text-secondary">{item.eventLabel}</p>
-        <p className="truncate text-sm text-text-secondary">{item.marketName}</p>
-        <div className="mt-1 flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-semibold text-text-primary">{item.selectionLabel}</span>
-          <span className="shrink-0 font-mono text-base font-bold text-gold">{item.odds.toFixed(2)}</span>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="truncate text-xs text-text-secondary">{item.eventLabel}</p>
+            <p className="truncate text-sm text-text-secondary">{item.marketName}</p>
+            <p className="truncate text-sm font-semibold text-text-primary">{item.selectionLabel}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="font-mono text-base font-bold text-gold">{item.odds.toFixed(2)}</span>
+            {!placed && (
+              <button
+                type="button"
+                onClick={() => removeItem(item.selectionId)}
+                aria-label={`Remove ${item.selectionLabel}`}
+                className="text-text-secondary hover:text-live"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

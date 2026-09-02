@@ -26,13 +26,32 @@ export interface OddsBoardEvent {
   extraMarketsCount: number;
 }
 
-function OddsButton({ marketId, marketName, selection }: { marketId: string; marketName: string; selection: OddsBoardSelection }) {
+function OddsButton({
+  marketId,
+  marketName,
+  eventLabel,
+  selection,
+}: {
+  marketId: string;
+  marketName: string;
+  eventLabel: string;
+  selection: OddsBoardSelection;
+}) {
   const { toggleSelection, isSelected } = useBetSlip();
   const selected = isSelected(marketId, selection.id);
   return (
     <button
       type="button"
-      onClick={() => toggleSelection({ marketId, marketName, selectionId: selection.id, selectionLabel: selection.label, odds: selection.odds })}
+      onClick={() =>
+        toggleSelection({
+          marketId,
+          marketName,
+          selectionId: selection.id,
+          selectionLabel: selection.label,
+          eventLabel,
+          odds: selection.odds,
+        })
+      }
       className={`flex h-11 w-full items-center justify-center rounded-full border text-sm font-bold transition-colors sm:w-24 ${
         selected ? "border-gold bg-gold/10 text-gold" : "border-transparent bg-surface-secondary text-text-primary hover:border-gold/60"
       }`}
@@ -76,7 +95,13 @@ function EventRow({ event }: { event: OddsBoardEvent }) {
         <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-2">
           {slots.map((s, i) =>
             s ? (
-              <OddsButton key={s.id} marketId={event.marketId} marketName={event.marketName} selection={s} />
+              <OddsButton
+                key={s.id}
+                marketId={event.marketId}
+                marketName={event.marketName}
+                eventLabel={`${event.homeTeam} vs ${event.awayTeam}`}
+                selection={s}
+              />
             ) : (
               <div key={`empty-${i}`} className="h-11 w-full rounded-full bg-transparent sm:w-24" />
             )
