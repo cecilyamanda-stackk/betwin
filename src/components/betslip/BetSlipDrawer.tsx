@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ShoppingCart, X } from "lucide-react";
 import { useBetSlip } from "./BetSlipContext";
-import { BetSlip } from "./BetSlip";
+import { BetSlipPanel } from "./BetSlipPanel";
 
 /**
  * Shopping-cart-style bet slip needs to persist as someone browses from
@@ -50,7 +50,7 @@ export function BetSlipDrawer() {
                 <X className="h-5 w-5 text-text-secondary hover:text-text-primary" />
               </button>
             </div>
-            <BetSlip />
+            <BetSlipPanel />
           </div>
         </div>
       )}
