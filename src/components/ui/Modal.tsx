@@ -20,10 +20,19 @@ interface ModalProps {
 export function Modal({ open, onClose, title, children }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  // Focus the dialog exactly once per open — not on every render where
+  // `onClose` happens to get a new identity (callers often pass it
+  // inline, e.g. `onCancel={() => setX(null)}`, which is recreated on
+  // every parent render). Depending on `onClose` here would steal focus
+  // back to the dialog container on every keystroke in any input inside
+  // it, since typing triggers a parent re-render.
   useEffect(() => {
     if (!open) return;
-
     dialogRef.current?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();

@@ -162,6 +162,13 @@ begin
       return query select v_acc_id, v_total_odds, v_payout;
       return;
     end if;
+
+    -- No existing bet for this idempotency key: SELECT INTO on zero
+    -- rows nulls out its targets, so reset the accumulator back to
+    -- its starting value before it's used below.
+    v_acc_id := null;
+    v_total_odds := 1;
+    v_payout := null;
   end if;
 
   if p_stake_amount is null or p_stake_amount <= 0 then

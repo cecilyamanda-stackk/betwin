@@ -180,6 +180,44 @@ export function BetSlipProvider({ children }: { children: React.ReactNode }) {
   const modeManuallySet = useRef(false);
   const prevItemCount = useRef(0);
   const hydrated = useRef(false);
+
+  // ── Prune stale selections restored from local/server storage. ──────
+  // A restored slip can reference a selection that no longer checks out
+  // — deleted/reset in the database, deactivated, or its market/event
+  // closed since it was added. Left alone, that item just sits there
+  // looking selected until the user tries to place and gets a confusing
+  // "could not be found" failure from the RPC. Instead, validate every
+  // restored id against current state right after loading it, and
+  // silently drop whatever no longer qualifies — same rules
+  // place_bet/place_accumulator_bet enforce server-side, applied early.
+  // Declared here, before the hydration effect below that calls it, so
+  // it's already initialized by the time that effect's dependency array
+  // is evaluated during render.
+  const pruneStale = useCallback(async (supabase: ReturnType<typeof createClient>, ids: string[]) => {
+    if (ids.length === 0) return;
+    const { data } = await supabase
+      .from("market_selections")
+      .select("id, active, market:markets(status, event:events(status))")
+      .in("id", ids);
+
+    const validIds = new Set(
+      (data ?? [])
+        .filter((row) => {
+          const market = row.market as unknown as { status: string; event: { status: string } | null } | null;
+          return (
+            row.active &&
+            market?.status === "OPEN" &&
+            (market?.event?.status === "PUBLISHED" || market?.event?.status === "LIVE")
+          );
+        })
+        .map((row) => row.id as string)
+    );
+
+    if (validIds.size === ids.length) return; // everything still checks out
+
+    structuralChange.current = true;
+    setItems((prev) => prev.filter((i) => validIds.has(i.selectionId)));
+  }, []);
   const userIdRef = useRef<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
   // Flipped true by any add/remove/clear/mode-switch — anything that changes
@@ -193,16 +231,18 @@ export function BetSlipProvider({ children }: { children: React.ReactNode }) {
   // one — that's the copy that follows them across devices. ──────────
   useEffect(() => {
     const local = loadLocal();
+    const supabase = createClient();
+
     if (local && local.items.length > 0) {
       setItems(fromPersisted(local));
       setModeState(local.mode);
       setAccumulatorStake(local.accumulatorStake);
       prevItemCount.current = local.items.length;
       modeManuallySet.current = true; // a restored slip keeps whatever tab it was left on, not the auto-default
+      pruneStale(supabase, local.items.map((i) => i.selectionId));
     }
 
     (async () => {
-      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -220,6 +260,7 @@ export function BetSlipProvider({ children }: { children: React.ReactNode }) {
         setAccumulatorStake(serverSlip.accumulatorStake);
         prevItemCount.current = serverSlip.items.length;
         modeManuallySet.current = true;
+        pruneStale(supabase, serverSlip.items.map((i) => i.selectionId));
       } else if (local && local.items.length > 0) {
         // First time this account has a server cart — carry the local
         // (guest) draft over instead of losing it.
@@ -227,8 +268,17 @@ export function BetSlipProvider({ children }: { children: React.ReactNode }) {
       }
       hydrated.current = true;
     })();
-  }, []);
+  }, [pruneStale]);
 
+  // ── Prune stale selections restored from local/server storage. ──────
+  // A restored slip can reference a selection that no longer checks out
+  // — deleted/reset in the database, deactivated, or its market/event
+  // closed since it was added. Left alone, that item just sits there
+  // looking selected until the user tries to place and gets a confusing
+  // "could not be found" failure from the RPC. Instead, validate every
+  // restored id against current state right after loading it, and
+  // silently drop whatever no longer qualifies — same rules
+  // place_bet/place_accumulator_bet enforce server-side, applied early.
   // ── Auto-default to Accumulator the moment the slip crosses from
   // <2 to 2+ items — but only if the user hasn't already picked a tab
   // for this "session" of having multiple items. Dropping back below 2

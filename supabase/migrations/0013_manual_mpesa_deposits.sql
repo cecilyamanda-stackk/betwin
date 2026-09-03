@@ -28,7 +28,7 @@ create table public.manual_deposit_requests (
   admin_note text,
   -- Set only on approval, pointing at the DEPOSIT transaction it created.
   transaction_id uuid references public.transactions (id),
-  reviewed_by uuid references auth.users (id),
+  reviewed_by uuid references auth.users (id) on delete set null,
   reviewed_at timestamptz,
   created_at timestamptz not null default now(),
 
