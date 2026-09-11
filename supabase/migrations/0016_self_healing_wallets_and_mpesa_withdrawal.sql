@@ -1,4 +1,4 @@
--- Betwin — self-healing wallet rows + M-Pesa-only withdrawal by phone number
+-- Bet606 — self-healing wallet rows + M-Pesa-only withdrawal by phone number
 --
 -- Two things in one migration because they touch the same functions:
 --

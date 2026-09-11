@@ -1,4 +1,4 @@
--- Betwin — Phase 5 (Wagering Roadmap): bet slip idempotency
+-- Bet606 — Phase 5 (Wagering Roadmap): bet slip idempotency
 --
 -- Phase 5's spec pairs the bet slip's submit-protection (button disables
 -- on click, stays disabled until the server responds) with "the

@@ -1,4 +1,4 @@
--- Betwin — Phase 6 (Wagering Roadmap): Responsible Gambling controls
+-- Bet606 — Phase 6 (Wagering Roadmap): Responsible Gambling controls
 --
 -- Scope note: Phase 0's groundwork calls for a drafted Responsible
 -- Gambling *policy* (a legal/compliance document) before this UI tab

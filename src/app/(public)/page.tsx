@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RealtimeRefresher } from "@/components/RealtimeRefresher";
@@ -144,6 +145,23 @@ export default async function HomePage() {
         <p className="mt-1 text-text-secondary">
           Predict match outcomes, climb the leaderboard, and follow live sports.
         </p>
+      </section>
+
+      {/*
+        Hero advert banner (section 11 lead visual). Uses the brand's own
+        promo artwork (stadium scene + wordmark) rather than a generic stock
+        image — swap the file in public/images/bet606-hero-banner.png to
+        update it.
+      */}
+      <section className="overflow-hidden rounded-card border border-border bg-surface shadow-card">
+        <Image
+          src="/images/bet606-hero-banner.png"
+          alt={`${BRAND.name} — predict, bet, win`}
+          width={1672}
+          height={941}
+          className="h-auto w-full"
+          priority
+        />
       </section>
 
       {oddsBoardEvents.length > 0 && (

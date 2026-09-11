@@ -36,7 +36,7 @@ export function Header({ userEmail, liveEvents = [], walletBalance, mpesaConfig 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 md:gap-6 md:px-6">
-        <Link href="/" aria-label="Betwin home" className="shrink-0">
+        <Link href="/" aria-label="Bet606 home" className="shrink-0">
           <BrandLogo />
         </Link>
 
@@ -51,9 +51,13 @@ export function Header({ userEmail, liveEvents = [], walletBalance, mpesaConfig 
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               {walletBalance !== undefined && walletBalance !== null && mpesaConfig && (
                 <>
-                  <span className="pill shrink-0 font-mono text-gold" title="Wallet balance">
+                  <Link
+                    href="/account/wallet"
+                    className="pill shrink-0 font-mono text-gold transition-colors hover:border-gold/60 hover:bg-surface-secondary"
+                    title="Go to wallet"
+                  >
                     {formatKES(walletBalance)}
-                  </span>
+                  </Link>
                   <DepositButton mpesaConfig={mpesaConfig} />
                 </>
               )}

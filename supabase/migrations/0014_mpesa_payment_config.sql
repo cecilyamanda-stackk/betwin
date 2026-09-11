@@ -1,4 +1,4 @@
--- Betwin — M-Pesa payment configuration (Till vs Paybill)
+-- Bet606 — M-Pesa payment configuration (Till vs Paybill)
 --
 -- Reuses the existing platform_settings key-value mechanism (same as
 -- wallet_enabled) rather than a dedicated table, since this is exactly

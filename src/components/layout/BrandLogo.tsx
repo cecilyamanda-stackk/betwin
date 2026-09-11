@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { BRAND } from "@/lib/branding";
 
 interface BrandLogoProps {
@@ -6,31 +7,41 @@ interface BrandLogoProps {
 }
 
 /**
- * Temporary placeholder mark: a simple gold flame over navy, echoing the
- * "flame + gold + navy" brief in section 4. This is the ONLY place the
- * logo graphic is drawn — replace the <svg> below when the client
- * supplies final artwork, and the rest of the app updates automatically.
+ * The ONLY place the logo is drawn — every header, footer, auth screen, and
+ * admin nav renders through this component (see BRAND in
+ * src/lib/branding.ts), so changes here are enough to rebrand the whole app.
+ *
+ * This renders the icon mark (public/images/bet606-icon.png, the same
+ * artwork as the browser favicon at src/app/icon.png) next to a live CSS
+ * text wordmark rather than a flat logo image — a baked-in image box loses
+ * its background color contrast whenever it sits on a surface other than
+ * pure black, whereas real text always blends with whatever surface it's
+ * on. The type styling (heavy weight, uppercase, tight tracking, forward
+ * skew, two-tone BET / 606 color split) approximates the brand's wordmark
+ * design spec using the existing Manrope display font.
+ *
+ * showWordmark=false renders the icon on its own for tight spaces like the
+ * admin header.
  */
 export function BrandLogo({ className = "", showWordmark = true }: BrandLogoProps) {
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 28 28"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <rect width="28" height="28" rx="7" fill="#111C36" />
-        <path
-          d="M14 4c-.4 3-2.6 4.3-4 6.3-1.6 2.3-2 5.7.3 8 1.6 1.6 3.9 2 5.7 1.3-1-1-1.5-2-1.2-3.3.3-1.3 1.3-2 1.6-3.3.6 1 1.2 1.6 1.2 3 1.6-1.3 2.4-3.6 1.8-5.6-.4-1.4-1.4-2.3-1.7-3.7-.2 1-.5 1.6-1 2-.2-1.8-1-3.3-2.7-4.7Z"
-          fill="#F4C430"
-        />
-      </svg>
+    <div className={`flex items-center gap-2 ${className}`}>
+      <Image
+        src="/images/bet606-icon.png"
+        alt={showWordmark ? "" : BRAND.name}
+        aria-hidden={showWordmark}
+        width={1254}
+        height={1254}
+        className="h-7 w-7 shrink-0 rounded-md"
+        priority
+      />
       {showWordmark && (
-        <span className="font-display text-lg font-extrabold tracking-tight text-text-primary">
-          {BRAND.name}
+        <span
+          className="inline-block skew-x-[-8deg] font-display text-xl font-extrabold uppercase leading-none tracking-tighter"
+          aria-label={BRAND.name}
+        >
+          <span className="text-white">Bet</span>
+          <span className="text-wordmark">606</span>
         </span>
       )}
     </div>

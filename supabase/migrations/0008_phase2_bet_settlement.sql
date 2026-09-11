@@ -1,4 +1,4 @@
--- Betwin — Phase 2 (Wagering Roadmap): bet placement & settlement logic
+-- Bet606 — Phase 2 (Wagering Roadmap): bet placement & settlement logic
 --
 -- Scope note: this migration builds the settlement half of Phase 2 —
 -- automatic win/loss computation per market family off an event's final

@@ -1,4 +1,4 @@
--- Betwin — Phase 3 addendum: phone number on registration
+-- Bet606 — Phase 3 addendum: phone number on registration
 --
 -- RegisterForm now collects a phone number. It's passed through
 -- supabase.auth.signUp's `options.data` (raw_user_meta_data) rather than

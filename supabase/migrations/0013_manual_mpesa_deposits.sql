@@ -1,4 +1,4 @@
--- Betwin — Manual M-Pesa deposit reconciliation
+-- Bet606 — Manual M-Pesa deposit reconciliation
 --
 -- Scope note: the client hasn't applied for M-Pesa's Daraja API key yet,
 -- so there's still no automated way to confirm a payment happened (same

@@ -42,7 +42,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           onClick={reset}
           style={{
             borderRadius: "0.375rem",
-            background: "#f4c430",
+            background: "#bbf90a",
             color: "#0b0d10",
             fontWeight: 600,
             padding: "0.5rem 1rem",

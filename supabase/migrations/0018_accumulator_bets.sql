@@ -1,4 +1,4 @@
--- Betwin — Accumulator (Multiples) betting
+-- Bet606 — Accumulator (Multiples) betting
 --
 -- Until now `bets` was the only wager shape: one row, one selection, one
 -- stake (see the Phase 1 migration's own note that a parlay "would need

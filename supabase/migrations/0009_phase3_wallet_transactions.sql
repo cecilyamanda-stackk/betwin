@@ -1,7 +1,7 @@
--- Betwin — Phase 3 (Wagering Roadmap): wallet & transactions
+-- Bet606 — Phase 3 (Wagering Roadmap): wallet & transactions
 --
 -- Scope note: Phase 0's payment-processor question is still unanswered
--- (see Betwin_Wagering_Wallet_Roadmap.md), so there is deliberately no
+-- (see Bet606_Wagering_Wallet_Roadmap.md), so there is deliberately no
 -- self-serve "deposit" path in this migration — a same-request "tell us
 -- how much you paid, we'll credit it" endpoint would let any authenticated
 -- user print money. What's built instead:

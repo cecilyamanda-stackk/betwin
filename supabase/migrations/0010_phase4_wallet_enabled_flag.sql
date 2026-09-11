@@ -1,4 +1,4 @@
--- Betwin — Phase 4 (Wagering Roadmap): header balance + deposit button
+-- Bet606 — Phase 4 (Wagering Roadmap): header balance + deposit button
 --
 -- Phase 8 of the roadmap calls for feature-flagging "the whole wallet
 -- system" behind a platform_settings row so it can ship to admins only,

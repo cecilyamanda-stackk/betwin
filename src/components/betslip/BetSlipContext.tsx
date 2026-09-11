@@ -90,7 +90,7 @@ function newIdempotencyKey(): string {
 // yet are ever persisted — a placed bet is already recorded for real in
 // `bets`/`accumulator_bets`, restoring it into the slip would just be
 // showing a stale duplicate.
-const LOCAL_STORAGE_KEY = "betwin:bet-slip:v1";
+const LOCAL_STORAGE_KEY = "bet606:bet-slip:v1";
 
 interface PersistedItem {
   marketId: string;

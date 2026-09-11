@@ -1,4 +1,4 @@
--- Betwin — Bet slip persistence ("just like a shopping cart")
+-- Bet606 — Bet slip persistence ("just like a shopping cart")
 --
 -- The bet slip previously lived only in React state — a refresh (or
 -- closing the tab) silently threw away every selection. This adds a

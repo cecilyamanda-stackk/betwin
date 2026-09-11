@@ -1,6 +1,6 @@
--- Betwin — Phase 1 (Wagering Roadmap): richer markets & odds
+-- Bet606 — Phase 1 (Wagering Roadmap): richer markets & odds
 --
--- Scope note (see Betwin_Wagering_Wallet_Roadmap.md): this migration only
+-- Scope note (see Bet606_Wagering_Wallet_Roadmap.md): this migration only
 -- adds the *data model* for real-money markets/odds/stakes. It does not
 -- wire up money movement — there is still no wallet/transactions table
 -- (that's Phase 3) and no placeBet Server Action (Phase 2). Phase 0's

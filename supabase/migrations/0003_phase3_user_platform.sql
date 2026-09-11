@@ -1,4 +1,4 @@
--- Betwin — Phase 3: User Platform
+-- Bet606 — Phase 3: User Platform
 -- Predictions, achievements, follows (backs the leaderboard's "Friends"
 -- view), and prediction challenges. Settlement (writing WON/LOST/VOID +
 -- points_earned) is a Phase 4 admin action — this migration only creates

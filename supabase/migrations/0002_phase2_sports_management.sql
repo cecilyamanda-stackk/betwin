@@ -1,4 +1,4 @@
--- Betwin — Phase 2: Sports Management
+-- Bet606 — Phase 2: Sports Management
 -- Sports catalogue: sports, competitions, teams, events, markets, and
 -- market selections, plus the indexes/RLS admins and the public site need.
 -- Predictions (Phase 3) reference markets/market_selections but are

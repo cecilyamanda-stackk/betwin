@@ -1,8 +1,13 @@
 import type { Config } from "tailwindcss";
 
-// Betwin design tokens. These map 1:1 to the palette in the product spec.
-// Kept in one place so the eventual brand refresh only touches this file
-// plus /src/lib/branding.ts.
+// Bet606 design tokens. These map 1:1 to the palette in the product spec.
+// Kept in one place so future brand refreshes only touch this file plus
+// /src/lib/branding.ts.
+//
+// The `gold` key name is legacy (kept as-is rather than renamed across the
+// ~140 `text-gold` / `bg-gold` / `border-gold` call sites in src/), but it
+// now resolves to Bet606's lime-green accent, sampled from the supplied
+// icon/logo artwork (~#BBF90A) instead of the old amber.
 const config: Config = {
   content: [
     "./src/app/**/*.{ts,tsx}",
@@ -11,17 +16,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0B132B",
+        background: "#080B0D",
         surface: {
-          DEFAULT: "#111C36",
-          secondary: "#162342",
+          DEFAULT: "#131519",
+          secondary: "#1B1E24",
         },
         gold: {
-          DEFAULT: "#F4C430",
-          hover: "#FFD95A",
+          DEFAULT: "#BBF90A",
+          hover: "#CCFA47",
         },
+        // Exact neon lime from the BET606 wordmark spec — kept distinct
+        // from `gold` above since the wordmark calls for this precise
+        // value, while `gold` covers general UI accents/buttons.
+        wordmark: "#B7FF00",
         border: {
-          DEFAULT: "#263553",
+          DEFAULT: "#262A31",
         },
         text: {
           primary: "#FFFFFF",

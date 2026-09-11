@@ -1,7 +1,7 @@
-# Betwin — Phase 1: Foundation
+# Bet606 — Phase 1: Foundation
 
 Working name for the sports prediction platform described in the product spec.
-`Betwin` is a placeholder — see [`src/lib/branding.ts`](src/lib/branding.ts) and
+`Bet606` is a placeholder — see [`src/lib/branding.ts`](src/lib/branding.ts) and
 [`src/components/layout/BrandLogo.tsx`](src/components/layout/BrandLogo.tsx),
 the only two files a future rebrand needs to touch.
 

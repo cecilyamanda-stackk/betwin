@@ -1,4 +1,4 @@
--- Betwin — Phase 1: Foundation
+-- Bet606 — Phase 1: Foundation
 -- Profiles, roles, RLS, and audit logging.
 -- Sports/competitions/teams/events/markets/predictions land in Phase 2/3
 -- migrations, kept separate so each phase is reviewable on its own.

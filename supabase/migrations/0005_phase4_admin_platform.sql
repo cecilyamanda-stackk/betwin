@@ -1,4 +1,4 @@
--- Betwin — Phase 4: Admin Platform
+-- Bet606 — Phase 4: Admin Platform
 --
 -- Adds what the admin console needs for user management, manual result
 -- entry / settlement, system announcements, and site-wide settings.

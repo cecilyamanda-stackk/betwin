@@ -1,4 +1,4 @@
-# Betwin — Phase 5 Security Review
+# Bet606 — Phase 5 Security Review
 
 A pass over every RLS policy and every Server Action against section 29,
 as called for in the roadmap. Scope: `supabase/migrations/*.sql`,

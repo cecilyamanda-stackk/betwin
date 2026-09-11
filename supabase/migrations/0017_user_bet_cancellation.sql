@@ -1,4 +1,4 @@
--- Betwin — Wagering roadmap follow-up: user-initiated bet cancellation
+-- Bet606 — Wagering roadmap follow-up: user-initiated bet cancellation
 --
 -- Gap this closes: a user who places the same bet twice by mistake (two
 -- separate placeBet calls — a double-tap that generated two idempotency
