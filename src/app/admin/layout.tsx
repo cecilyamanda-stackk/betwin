@@ -8,6 +8,11 @@ const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
 
 export const metadata: Metadata = {
   title: `${BRAND.name} Admin`,
+  // Defense in depth alongside robots.ts's /admin disallow rule — the
+  // console is auth-gated so a crawler could never see real content
+  // here regardless, but this makes sure a stray indexed URL never
+  // shows the admin login/console in search results.
+  robots: { index: false, follow: false },
 };
 
 /**

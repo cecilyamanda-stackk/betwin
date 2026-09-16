@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LeaderboardTable, type LeaderboardRow } from "@/components/leaderboard/LeaderboardTable";
 import { CompetitionFilter } from "@/components/leaderboard/CompetitionFilter";
 import { RealtimeRefresher } from "@/components/RealtimeRefresher";
+import { SITE_URL } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Prediction Leaderboard",
+  description:
+    "See who's topping the Bet606 prediction leaderboard. Predict match outcomes for free, earn points, and climb the rankings.",
+  alternates: { canonical: `${SITE_URL}/leaderboard` },
+};
 
 const TABS = [
   { id: "global", label: "Global" },

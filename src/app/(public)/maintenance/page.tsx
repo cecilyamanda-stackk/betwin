@@ -2,6 +2,7 @@ import { BRAND } from "@/lib/branding";
 
 export const metadata = {
   title: `${BRAND.name} — Under maintenance`,
+  robots: { index: false, follow: false },
 };
 
 /**

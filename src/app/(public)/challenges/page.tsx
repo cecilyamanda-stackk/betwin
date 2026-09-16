@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ChallengeCard } from "@/components/challenges/ChallengeCard";
+import { SITE_URL } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Prediction Challenges",
+  description: "Join themed prediction challenges on Bet606 and compete for the top spot on their own leaderboards.",
+  alternates: { canonical: `${SITE_URL}/challenges` },
+};
 
 /** /challenges — active/closed prediction challenges (section 19's mini-leaderboard groupings). */
 export default async function ChallengesPage() {

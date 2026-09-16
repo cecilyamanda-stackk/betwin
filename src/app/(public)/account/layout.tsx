@@ -1,6 +1,15 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { AccountSidebar } from "@/components/account/AccountSidebar";
+import { NOINDEX_METADATA } from "@/lib/seo";
+
+// Covers the whole /account subtree — wallet, history, security,
+// responsible gambling settings. All auth-gated (redirects to login
+// below), so a crawler could never see real content here anyway; this
+// is the defensive backstop in case a page ever gets linked from
+// somewhere Google can reach.
+export const metadata: Metadata = NOINDEX_METADATA;
 
 /**
  * /account — split sidebar + tab layout (wagering roadmap Phase 6).

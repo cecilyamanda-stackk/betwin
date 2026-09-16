@@ -112,8 +112,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all paths except static assets and image optimization files.
+     * Match all paths except static assets, image optimization files,
+     * and the SEO metadata routes (robots.txt/sitemap.xml) — those must
+     * always return their real content type to crawlers, even during
+     * maintenance mode, never a redirect to the HTML maintenance page.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

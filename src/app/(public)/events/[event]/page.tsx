@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { EventStatusBadge } from "@/components/admin/EventStatusBadge";
 import { TeamDisplay } from "@/components/events/TeamDisplay";
@@ -8,6 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { RealtimeRefresher } from "@/components/RealtimeRefresher";
 import { EventOddsGrid } from "@/components/betslip/EventOddsGrid";
 import { isWageringMarketType } from "@/lib/markets/wagering";
+import { SITE_URL } from "@/lib/seo";
 import type { MarketType, SelectionOutcomeCode } from "@/types/database";
 
 interface SelectionRow {
@@ -23,6 +25,36 @@ interface SelectionRow {
 interface MyPredictionRow {
   market_id: string;
   selection_id: string;
+}
+
+// A dedicated, minimal query rather than reusing the page component's
+// fetch below: generateMetadata and the page component run as two
+// separate invocations in Next.js (no implicit data sharing between
+// them), so this intentionally asks for only the handful of columns a
+// title/description actually needs.
+export async function generateMetadata({ params }: { params: { event: string } }): Promise<Metadata> {
+  const supabase = await createClient();
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, home_team_id, away_team_id, competition_id")
+    .eq("id", params.event)
+    .maybeSingle();
+  if (!event) return {};
+
+  const [{ data: home }, { data: away }, { data: competition }] = await Promise.all([
+    supabase.from("teams").select("name").eq("id", event.home_team_id).single(),
+    supabase.from("teams").select("name").eq("id", event.away_team_id).single(),
+    supabase.from("competitions").select("name").eq("id", event.competition_id).single(),
+  ]);
+  if (!home || !away) return {};
+
+  const matchup = `${home.name} vs ${away.name}`;
+  return {
+    title: `${matchup} — Odds & Prediction`,
+    description: `${matchup}${competition ? ` (${competition.name})` : ""} — live betting odds and match predictions on Bet606, Kenya's sports betting platform.`,
+    alternates: { canonical: `${SITE_URL}/events/${event.id}` },
+  };
 }
 
 /**

@@ -1,8 +1,27 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LeaderboardTable, type LeaderboardRow } from "@/components/leaderboard/LeaderboardTable";
 import { ChallengeJoinButton } from "@/components/challenges/ChallengeJoinButton";
+import { SITE_URL } from "@/lib/seo";
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const supabase = await createClient();
+  const { data: challenge } = await supabase
+    .from("prediction_challenges")
+    .select("name, slug, description")
+    .eq("slug", params.slug)
+    .neq("status", "DRAFT")
+    .maybeSingle();
+  if (!challenge) return {};
+
+  return {
+    title: challenge.name,
+    description: challenge.description || `Join the ${challenge.name} prediction challenge on Bet606 and climb the leaderboard.`,
+    alternates: { canonical: `${SITE_URL}/challenges/${challenge.slug}` },
+  };
+}
 
 /** /challenges/[slug] — challenge details + its own mini-leaderboard. */
 export default async function ChallengeDetailPage({ params }: { params: { slug: string } }) {

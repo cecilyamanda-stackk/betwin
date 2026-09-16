@@ -1,7 +1,26 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SITE_URL } from "@/lib/seo";
+
+export async function generateMetadata({ params }: { params: { sport: string } }): Promise<Metadata> {
+  const supabase = await createClient();
+  const { data: sport } = await supabase
+    .from("sports")
+    .select("name, slug")
+    .eq("slug", params.sport)
+    .eq("active", true)
+    .maybeSingle();
+  if (!sport) return {};
+
+  return {
+    title: `${sport.name} Betting & Predictions`,
+    description: `Bet on ${sport.name} and predict match outcomes in Kenya. Live odds, upcoming fixtures, and competitions on Bet606.`,
+    alternates: { canonical: `${SITE_URL}/sports/${sport.slug}` },
+  };
+}
 
 /** /sports/[sport] — competitions within one sport (section 12). */
 export default async function SportPage({ params }: { params: { sport: string } }) {

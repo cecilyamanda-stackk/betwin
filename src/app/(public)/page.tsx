@@ -1,9 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RealtimeRefresher } from "@/components/RealtimeRefresher";
 import { BRAND } from "@/lib/branding";
+import { SITE_URL } from "@/lib/seo";
 import { createClient } from "@/lib/supabase/server";
 import { EventCard, type EventCardData } from "@/components/events/EventCard";
 import { LiveEventCard } from "@/components/events/LiveEventCard";
@@ -11,6 +13,14 @@ import { LeaderboardTable, type LeaderboardRow } from "@/components/leaderboard/
 import { TeamsGrid } from "@/components/betslip/TeamsGrid";
 import { getOddsBoardEvents } from "@/lib/oddsBoard";
 import type { EventStatus } from "@/types/database";
+
+// The layout's default title/description already target this page's
+// exact positioning ("Kenya's Sports Betting & Prediction Platform") —
+// this just pins the canonical URL so "/" is never treated as a
+// duplicate of itself under a query string or trailing slash variant.
+export const metadata: Metadata = {
+  alternates: { canonical: SITE_URL },
+};
 
 interface RawEvent {
   id: string;

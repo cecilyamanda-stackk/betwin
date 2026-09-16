@@ -1,6 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SITE_URL } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Sports & Competitions",
+  description: "Browse every sport and competition available for betting and predictions on Bet606, Kenya's sports betting platform.",
+  alternates: { canonical: `${SITE_URL}/sports` },
+};
 
 /** /sports — every active sport with a live competition count (section 12). */
 export default async function SportsPage() {

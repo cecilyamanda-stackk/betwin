@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LiveEventCard } from "@/components/events/LiveEventCard";
 import { RealtimeRefresher } from "@/components/RealtimeRefresher";
+import { SITE_URL } from "@/lib/seo";
 import type { EventStatus } from "@/types/database";
+
+export const metadata: Metadata = {
+  title: "Live Scores & In-Play Betting Odds",
+  description:
+    "Follow live football scores and in-play betting odds in Kenya, updated in real time. Bet on live matches on Bet606.",
+  alternates: { canonical: `${SITE_URL}/live` },
+};
 
 interface RawEvent {
   id: string;

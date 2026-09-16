@@ -1,7 +1,27 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { EventCard, type EventCardData } from "@/components/events/EventCard";
+import { SITE_URL } from "@/lib/seo";
+
+export async function generateMetadata({ params }: { params: { competition: string } }): Promise<Metadata> {
+  const supabase = await createClient();
+  const { data: competition } = await supabase
+    .from("competitions")
+    .select("name, slug, country")
+    .eq("slug", params.competition)
+    .eq("active", true)
+    .maybeSingle();
+  if (!competition) return {};
+
+  const place = competition.country ? ` (${competition.country})` : "";
+  return {
+    title: `${competition.name} Odds & Predictions`,
+    description: `${competition.name}${place} betting odds, fixtures, and match predictions in Kenya. Bet on ${competition.name} matches on Bet606.`,
+    alternates: { canonical: `${SITE_URL}/competitions/${competition.slug}` },
+  };
+}
 
 /** /competitions/[competition] — teams + events within one competition (section 12). */
 export default async function CompetitionPage({ params }: { params: { competition: string } }) {

@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { RealtimeRefresher } from "@/components/RealtimeRefresher";
 import { BRAND } from "@/lib/branding";
+import { BASE_METADATA } from "@/lib/seo";
 import { createClient } from "@/lib/supabase/server";
 import { parseMpesaPaymentConfig } from "@/lib/mpesa";
 import { BetSlipProvider } from "@/components/betslip/BetSlipContext";
@@ -25,8 +26,13 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
 
 export const metadata: Metadata = {
-  title: `${BRAND.name} — ${BRAND.tagline}`,
-  description: "Predict match outcomes, climb the leaderboard, and follow live sports events.",
+  ...BASE_METADATA,
+  title: {
+    default: `${BRAND.name} — Kenya's Sports Betting & Prediction Platform`,
+    template: `%s — ${BRAND.name}`,
+  },
+  description:
+    "Bet606 is Kenya's sports betting and prediction platform — live football odds, match predictions, real cash prizes, and a free-to-play leaderboard. Bet on today's games or predict and win.",
 };
 
 /**

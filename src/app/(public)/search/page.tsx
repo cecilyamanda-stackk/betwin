@@ -1,6 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { NOINDEX_METADATA } from "@/lib/seo";
+
+// Search-result pages are classic thin/duplicate content — the same
+// underlying sports/competitions/teams already have their own indexable
+// pages, so this one adds no unique value to send a crawler to.
+export const metadata: Metadata = NOINDEX_METADATA;
 
 /** /search — wired to the header SearchBar; searches sports, competitions, and teams (section 9). */
 export default async function SearchPage({ searchParams }: { searchParams: { q?: string } }) {
