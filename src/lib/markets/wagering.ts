@@ -1,10 +1,10 @@
 import type { MarketType, SelectionOutcomeCode } from "@/types/database";
 
 /**
- * The six real-money market families added in Phase 1 of the wagering
- * roadmap, as distinct from the original free-to-play families
- * (MATCH_RESULT, CORRECT_SCORE, TOTAL_GOALS, BOTH_TEAMS_SCORE, OTHER)
- * that back the points/leaderboard game and stay untouched.
+ * The real-money market families — the original six from Phase 1 of the
+ * wagering roadmap plus Exact Score, as distinct from the free-to-play
+ * families (MATCH_RESULT, CORRECT_SCORE, TOTAL_GOALS, BOTH_TEAMS_SCORE,
+ * OTHER) that back the points/leaderboard game and stay untouched.
  *
  * Shared by admin actions and admin UI so the two never drift — e.g. the
  * server-side "does this market need a line value" check and the
@@ -17,11 +17,51 @@ export const WAGERING_MARKET_TYPES: MarketType[] = [
   "HANDICAP",
   "BOTH_TEAMS_TO_SCORE",
   "DOUBLE_CHANCE",
+  "EXACT_SCORE",
 ];
 
 export function isWageringMarketType(type: MarketType): boolean {
   return WAGERING_MARKET_TYPES.includes(type);
 }
+
+/**
+ * Exact Score is the one wagering family whose selections aren't priced
+ * through the outcome_code vocabulary (see database.ts) — it's kept as
+ * its own check so every place that gates on "does this need an outcome
+ * code" (the admin form, resolveOutcomeCode) can exclude it in one spot.
+ */
+export const EXACT_SCORE_MARKET_TYPE: MarketType = "EXACT_SCORE";
+
+export function isExactScoreMarketType(type: MarketType): boolean {
+  return type === EXACT_SCORE_MARKET_TYPE;
+}
+
+/** "<home>-<away>", e.g. "2-1". Deliberately plain digits — no negative/decimal scores. */
+export const EXACT_SCORE_VALUE_PATTERN = /^\d{1,2}-\d{1,2}$/;
+
+/** The catch-all selection value for "any scoreline not priced above." */
+export const EXACT_SCORE_OTHER_VALUE = "OTHER";
+
+export function isValidExactScoreValue(value: string): boolean {
+  return value === EXACT_SCORE_OTHER_VALUE || EXACT_SCORE_VALUE_PATTERN.test(value);
+}
+
+/**
+ * Pre-filled rows for the admin's score-grid builder — the common
+ * low-scoring soccer outcomes, ordered the way bettors expect to scan
+ * them (draws and near-scores first). Not exhaustive: the grid builder
+ * also takes free-form scores for anything outside this list, and an
+ * "Any other score" row (EXACT_SCORE_OTHER_VALUE) covers the rest.
+ */
+export const EXACT_SCORE_GRID_DEFAULTS: string[] = [
+  "0-0", "1-0", "0-1",
+  "1-1", "2-0", "0-2",
+  "2-1", "1-2", "2-2",
+  "3-0", "0-3", "3-1",
+  "1-3", "3-2", "2-3",
+  "3-3", "4-0", "0-4",
+  "4-1", "1-4",
+];
 
 /** Market types whose settlement needs a `line_value` (Over/Under's total, Handicap's spread). */
 export const LINE_VALUE_MARKET_TYPES: MarketType[] = ["OVER_UNDER", "HANDICAP"];

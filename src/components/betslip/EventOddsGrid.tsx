@@ -66,13 +66,17 @@ export function EventOddsGrid({ markets, canBet, eventLabel }: { markets: Market
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className={`grid grid-cols-2 gap-2 ${market.type === "EXACT_SCORE" ? "" : "sm:grid-cols-3"}`}>
             {market.selections
               .filter((s) => s.active)
               .map((s) => {
                 const priced = s.current_odds !== null;
                 const disabled = !canBet || market.status !== "OPEN" || !priced;
                 const selected = isSelected(market.id, s.id);
+                // Exact Score selections store the same scoreline in both
+                // name and value — showing "2-1 (2-1)" would be redundant,
+                // so only append value when it actually adds information.
+                const label = s.value && s.value !== s.name ? `${s.name} (${s.value})` : s.name;
 
                 return (
                   <button
@@ -85,7 +89,7 @@ export function EventOddsGrid({ markets, canBet, eventLabel }: { markets: Market
                         marketId: market.id,
                         marketName: market.name,
                         selectionId: s.id,
-                        selectionLabel: s.value ? `${s.name} (${s.value})` : s.name,
+                        selectionLabel: label,
                         eventLabel,
                         odds: s.current_odds as number,
                       })

@@ -16,6 +16,7 @@ const MARKET_TYPE_LABEL: Record<string, string> = {
   HANDICAP: "Handicap",
   BOTH_TEAMS_TO_SCORE: "Both Teams to Score",
   DOUBLE_CHANCE: "Double Chance",
+  EXACT_SCORE: "Exact Score",
 };
 
 /**

@@ -9,6 +9,9 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  /** "sm" (default) fits every existing single-column form. "lg" is for
+   *  wider content like the Exact Score grid builder. */
+  size?: "sm" | "lg";
 }
 
 /**
@@ -17,7 +20,7 @@ interface ModalProps {
  * it always floats above the sticky header/sidebar regardless of where
  * it's rendered from.
  */
-export function Modal({ open, onClose, title, children }: ModalProps) {
+export function Modal({ open, onClose, title, children, size = "sm" }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Focus the dialog exactly once per open — not on every render where
@@ -63,7 +66,9 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="card relative z-10 w-full max-w-sm p-6 outline-none modal-in"
+        className={`card relative z-10 w-full p-6 outline-none modal-in ${
+          size === "lg" ? "max-w-2xl" : "max-w-sm"
+        }`}
       >
         <button
           type="button"

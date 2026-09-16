@@ -1,16 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, MarketType } from "@/types/database";
 import type { OddsBoardEvent } from "@/components/betslip/TeamsGrid";
+import { WAGERING_MARKET_TYPES } from "@/lib/markets/wagering";
 
 const HEADLINE_MARKET_PRIORITY: MarketType[] = ["MATCH_WINNER_3WAY", "MONEYLINE"];
-const WAGERING_TYPES: MarketType[] = [
-  "MATCH_WINNER_3WAY",
-  "MONEYLINE",
-  "OVER_UNDER",
-  "HANDICAP",
-  "BOTH_TEAMS_TO_SCORE",
-  "DOUBLE_CHANCE",
-];
+// Sourced from lib/markets/wagering so a new wagering family (e.g. Exact
+// Score) shows up in "+N Markets" the moment it's added there, instead of
+// needing this list updated separately too.
+const WAGERING_TYPES: MarketType[] = WAGERING_MARKET_TYPES;
 
 /**
  * Builds the homepage odds board: PUBLISHED/LIVE events that have a

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { EventStatusBadge } from "@/components/admin/EventStatusBadge";
 import { AdminSelect } from "@/components/admin/AdminForm";
 import { setMarketResult, resettleMarket, resettleEventBets } from "@/actions/admin/results";
-import { isWageringMarketType } from "@/lib/markets/wagering";
+import { isWageringMarketType, isExactScoreMarketType } from "@/lib/markets/wagering";
 import type { EventStatus, MarketStatus, MarketType, SelectionOutcomeCode } from "@/types/database";
 
 interface Selection {
@@ -120,15 +120,17 @@ function MarketRow({ market, eventId }: { market: Market; eventId: string }) {
 }
 
 /**
- * Read-only row for the six wagering market types (Phase 2 of the
- * wagering roadmap). There's no "pick the winner" control here — the
- * DB's settle_bets_for_event() grades every selection against the
+ * Read-only row for the wagering market types (Phase 2 of the wagering
+ * roadmap, plus Exact Score). There's no "pick the winner" control here —
+ * the DB's settle_bets_for_event() grades every selection against the
  * event's final score the moment the event is marked FINISHED, using
- * each selection's outcome_code + the market's line_value. This row just
- * shows what that logic has to work with, so an admin can sanity-check a
- * market's pricing/outcome-code setup before the event finishes.
+ * each selection's outcome_code (or, for Exact Score, its `value`
+ * scoreline) + the market's line_value. This row just shows what that
+ * logic has to work with, so an admin can sanity-check a market's
+ * pricing/outcome-code setup before the event finishes.
  */
 function WageringMarketRow({ market }: { market: Market }) {
+  const exactScore = isExactScoreMarketType(market.type);
   return (
     <div className="flex flex-col gap-2 border-t border-border/60 py-3 first:border-t-0 sm:flex-row sm:items-start sm:justify-between">
       <div>
@@ -143,7 +145,10 @@ function WageringMarketRow({ market }: { market: Market }) {
           <span key={s.id} className="pill inline-flex items-center gap-1.5">
             {s.name}
             <span className="font-mono text-gold">{s.current_odds?.toFixed(2) ?? "—"}</span>
-            {!s.outcome_code && <span className="text-live">no outcome code</span>}
+            {/* Exact Score selections settle off `value` (the scoreline),
+                not outcome_code — this warning only applies to the six
+                outcome_code-driven families. */}
+            {!exactScore && !s.outcome_code && <span className="text-live">no outcome code</span>}
           </span>
         ))}
         <span

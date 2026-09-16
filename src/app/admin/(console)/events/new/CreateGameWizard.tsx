@@ -120,7 +120,15 @@ function CustomMarketBuilder({ onAdd }: { onAdd: (market: PendingMarket) => void
           label="Market type"
           value={type}
           onChange={handleTypeChange}
-          options={WAGERING_MARKET_TYPES.map((t) => ({ value: t, label: WAGERING_TYPE_LABELS[t] ?? t }))}
+          // Exact Score is excluded here: this builder only supports the
+          // outcome_code-driven types (one selection = one fixed code).
+          // Exact Score selections are unbounded scorelines priced via
+          // the "Add score grid" bulk builder on the event detail page
+          // once the game exists, not one at a time here.
+          options={WAGERING_MARKET_TYPES.filter((t) => t !== "EXACT_SCORE").map((t) => ({
+            value: t,
+            label: WAGERING_TYPE_LABELS[t] ?? t,
+          }))}
         />
         {needsLine && (
           <label className="flex flex-col gap-1.5 text-sm">

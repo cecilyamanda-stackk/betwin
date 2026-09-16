@@ -11,6 +11,7 @@ interface AdminFormProps {
   error: string | null;
   submitLabel: string;
   children: React.ReactNode;
+  size?: "sm" | "lg";
 }
 
 /**
@@ -27,9 +28,10 @@ export function AdminForm({
   error,
   submitLabel,
   children,
+  size,
 }: AdminFormProps) {
   return (
-    <Modal open={open} onClose={onClose} title={title}>
+    <Modal open={open} onClose={onClose} title={title} size={size}>
       <h2 className="mb-4 font-display text-lg font-bold text-text-primary">{title}</h2>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         {children}

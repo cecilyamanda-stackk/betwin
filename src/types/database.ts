@@ -29,7 +29,17 @@ export type MarketType =
   | "OVER_UNDER"
   | "HANDICAP"
   | "BOTH_TEAMS_TO_SCORE"
-  | "DOUBLE_CHANCE";
+  | "DOUBLE_CHANCE"
+  // Real-money "exact score"/"correct score" grid (admin sets odds per
+  // scoreline, e.g. 0-1 @ 4.50, 1-1 @ 12.30). Deliberately its own value
+  // rather than reusing the points-game CORRECT_SCORE above: that one is
+  // free text settled manually by an admin, this one is auto-settled off
+  // market_selections.value (see settle_bets_for_event) and would collide
+  // in meaning if the two shared a type. Selections don't use
+  // outcome_code (scorelines are unbounded, not a fixed vocabulary) —
+  // instead `value` holds "<home>-<away>" (e.g. "2-1") or the literal
+  // "OTHER" catch-all for any scoreline the admin didn't price.
+  | "EXACT_SCORE";
 
 export type MarketStatus = "OPEN" | "SUSPENDED" | "SETTLED";
 

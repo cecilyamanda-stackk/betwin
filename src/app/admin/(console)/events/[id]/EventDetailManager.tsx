@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Eye, EyeOff, LayoutGrid } from "lucide-react";
 import { EventStatusBadge } from "@/components/admin/EventStatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { AdminForm, AdminSelect } from "@/components/admin/AdminForm";
@@ -15,11 +15,22 @@ import {
   createMarket,
   createSelection,
   updateSelectionOdds,
+  updateMarket,
+  deleteMarket,
+  deleteSelection,
+  toggleSelectionActive,
   type EventInput,
   type MarketInput,
 } from "@/actions/admin/events";
 import type { EventStatus, MarketType, SelectionOutcomeCode } from "@/types/database";
-import { LINE_VALUE_MARKET_TYPES, OUTCOME_CODES_BY_MARKET_TYPE, isWageringMarketType } from "@/lib/markets/wagering";
+import {
+  LINE_VALUE_MARKET_TYPES,
+  OUTCOME_CODES_BY_MARKET_TYPE,
+  isWageringMarketType,
+  isExactScoreMarketType,
+} from "@/lib/markets/wagering";
+import { ExactScoreGridForm } from "./ExactScoreGridForm";
+import { RealtimeRefresher } from "@/components/RealtimeRefresher";
 
 interface EventDetail {
   id: string;
@@ -35,7 +46,7 @@ interface EventDetail {
   competitionName: string;
 }
 
-interface Selection {
+export interface Selection {
   id: string;
   market_id: string;
   name: string;
@@ -84,6 +95,7 @@ const MARKET_TYPES: { value: MarketType; label: string }[] = [
   { value: "HANDICAP", label: "Handicap / Point Spread" },
   { value: "BOTH_TEAMS_TO_SCORE", label: "Both Teams to Score (BTTS)" },
   { value: "DOUBLE_CHANCE", label: "Double Chance (1X / X2 / 12)" },
+  { value: "EXACT_SCORE", label: "Exact Score (real-money grid)" },
 ];
 
 // Market types whose line_value is required (roadmap: "always .5 line
@@ -124,7 +136,7 @@ function toDatetimeLocal(iso: string) {
 
 export function EventDetailManager({
   event,
-  markets,
+  markets: initialMarkets,
   competitions,
   teams,
 }: {
@@ -134,6 +146,18 @@ export function EventDetailManager({
   teams: Team[];
 }) {
   const router = useRouter();
+
+  // Server-fetched markets are held as local state and updated directly
+  // from each action's own result (see the handlers below) rather than
+  // relying solely on router.refresh() to repaint — that keeps every
+  // add/edit/delete/toggle instant regardless of Next's router-cache
+  // timing. `initialMarkets` still flows back in here (e.g. once
+  // router.refresh()/the realtime refresh below actually lands, or on a
+  // fresh navigation) so changes from another admin's session still show.
+  const [markets, setMarkets] = useState<Market[]>(initialMarkets);
+  useEffect(() => {
+    setMarkets(initialMarkets);
+  }, [initialMarkets]);
 
   useAdminBreadcrumbLabel(event.id, `${event.homeTeamName} vs ${event.awayTeamName}`);
 
@@ -184,6 +208,32 @@ export function EventDetailManager({
   const [oddsEditValue, setOddsEditValue] = useState("");
   const [oddsEditLoading, setOddsEditLoading] = useState(false);
   const [oddsEditError, setOddsEditError] = useState<string | null>(null);
+
+  // Exact Score bulk grid builder — one market at a time
+  const [scoreGridMarketId, setScoreGridMarketId] = useState<string | null>(null);
+
+  // Edit market (rename / change line value)
+  const [editMarketTarget, setEditMarketTarget] = useState<Market | null>(null);
+  const [editMarketName, setEditMarketName] = useState("");
+  const [editMarketLine, setEditMarketLine] = useState("");
+  const [editMarketLoading, setEditMarketLoading] = useState(false);
+  const [editMarketError, setEditMarketError] = useState<string | null>(null);
+  const editMarketNeedsLine = editMarketTarget ? LINE_VALUE_MARKET_TYPES.includes(editMarketTarget.type) : false;
+
+  // Delete market
+  const [deleteMarketTarget, setDeleteMarketTarget] = useState<Market | null>(null);
+  const [deleteMarketLoading, setDeleteMarketLoading] = useState(false);
+  const [deleteMarketError, setDeleteMarketError] = useState<string | null>(null);
+
+  // Delete selection
+  const [deleteSelectionTarget, setDeleteSelectionTarget] = useState<{ selection: Selection; marketId: string } | null>(
+    null
+  );
+  const [deleteSelectionLoading, setDeleteSelectionLoading] = useState(false);
+  const [deleteSelectionError, setDeleteSelectionError] = useState<string | null>(null);
+
+  // Activate/deactivate a selection — reversible, no confirm needed
+  const [toggleActiveLoadingId, setToggleActiveLoadingId] = useState<string | null>(null);
 
   async function handleEditSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -240,12 +290,13 @@ export function EventDetailManager({
     setMarketError(null);
     const result = await createMarket({ eventId: event.id, ...marketForm });
     setMarketLoading(false);
-    if (result.error) {
-      setMarketError(result.error);
+    if (result.error || !result.data) {
+      setMarketError(result.error ?? "Something went wrong creating the market.");
       return;
     }
     setMarketModalOpen(false);
     setMarketForm({ name: "", type: "MATCH_RESULT", lineValue: undefined });
+    setMarkets((prev) => [...prev, { ...result.data, selections: [] }]);
     router.refresh();
   }
 
@@ -275,8 +326,8 @@ export function EventDetailManager({
       outcomeCode: selectionOutcomeCode || undefined,
     });
     setSelectionLoading(false);
-    if (result.error) {
-      setSelectionError(result.error);
+    if (result.error || !result.data) {
+      setSelectionError(result.error ?? "Something went wrong creating the selection.");
       return;
     }
     setSelectionMarketId(null);
@@ -284,6 +335,9 @@ export function EventDetailManager({
     setSelectionValue("");
     setSelectionOdds("");
     setSelectionOutcomeCode("");
+    setMarkets((prev) =>
+      prev.map((m) => (m.id === marketId ? { ...m, selections: [...m.selections, result.data] } : m))
+    );
     router.refresh();
   }
 
@@ -309,13 +363,117 @@ export function EventDetailManager({
     }
     setOddsEditSelectionId(null);
     setOddsEditValue("");
+    setMarkets((prev) =>
+      prev.map((m) =>
+        m.id === marketId
+          ? { ...m, selections: m.selections.map((s) => (s.id === selection.id ? { ...s, current_odds: currentOdds } : s)) }
+          : m
+      )
+    );
+    router.refresh();
+  }
+
+  function openEditMarket(market: Market) {
+    setEditMarketTarget(market);
+    setEditMarketName(market.name);
+    setEditMarketLine(market.line_value?.toString() ?? "");
+    setEditMarketError(null);
+  }
+
+  async function handleEditMarketSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editMarketTarget) return;
+    if (editMarketNeedsLine && editMarketLine.trim() === "") {
+      setEditMarketError("This market type requires a line value.");
+      return;
+    }
+    setEditMarketLoading(true);
+    setEditMarketError(null);
+    const result = await updateMarket(editMarketTarget.id, event.id, {
+      name: editMarketName,
+      lineValue: editMarketNeedsLine ? Number(editMarketLine) : undefined,
+    });
+    setEditMarketLoading(false);
+    if (result.error) {
+      setEditMarketError(result.error);
+      return;
+    }
+    setEditMarketTarget(null);
+    setMarkets((prev) =>
+      prev.map((m) =>
+        m.id === editMarketTarget.id
+          ? { ...m, name: editMarketName, line_value: editMarketNeedsLine ? Number(editMarketLine) : null }
+          : m
+      )
+    );
+    router.refresh();
+  }
+
+  async function confirmDeleteMarket() {
+    if (!deleteMarketTarget) return;
+    setDeleteMarketLoading(true);
+    setDeleteMarketError(null);
+    const result = await deleteMarket(deleteMarketTarget.id, event.id);
+    setDeleteMarketLoading(false);
+    if (result.error) {
+      setDeleteMarketError(result.error);
+      return;
+    }
+    setDeleteMarketTarget(null);
+    setMarkets((prev) => prev.filter((m) => m.id !== deleteMarketTarget.id));
+    router.refresh();
+  }
+
+  async function confirmDeleteSelection() {
+    if (!deleteSelectionTarget) return;
+    setDeleteSelectionLoading(true);
+    setDeleteSelectionError(null);
+    const result = await deleteSelection(deleteSelectionTarget.selection.id, deleteSelectionTarget.marketId, event.id);
+    setDeleteSelectionLoading(false);
+    if (result.error) {
+      setDeleteSelectionError(result.error);
+      return;
+    }
+    setDeleteSelectionTarget(null);
+    setMarkets((prev) =>
+      prev.map((m) =>
+        m.id === deleteSelectionTarget.marketId
+          ? { ...m, selections: m.selections.filter((s) => s.id !== deleteSelectionTarget.selection.id) }
+          : m
+      )
+    );
+    router.refresh();
+  }
+
+  async function handleToggleActive(selection: Selection, marketId: string) {
+    setToggleActiveLoadingId(selection.id);
+    const result = await toggleSelectionActive(selection.id, marketId, event.id, !selection.active);
+    setToggleActiveLoadingId(null);
+    if (result.error) return;
+    setMarkets((prev) =>
+      prev.map((m) =>
+        m.id === marketId
+          ? { ...m, selections: m.selections.map((s) => (s.id === selection.id ? { ...s, active: !selection.active } : s)) }
+          : m
+      )
+    );
     router.refresh();
   }
 
   const nextStatuses = NEXT_STATUSES[event.status];
+  const marketIds = useMemo(() => markets.map((m) => m.id), [markets]);
 
   return (
     <div>
+      {/* Live-sync: a market/selection change lands here within ~400ms
+          without the admin needing to reload the page — whether it came
+          from this action just finishing (router.refresh() below already
+          covers that instantly) or from another admin tab/session. */}
+      <RealtimeRefresher table="markets" filter={`event_id=eq.${event.id}`} />
+      {marketIds.length > 0 && (
+        <RealtimeRefresher table="market_selections" filter={`market_id=in.(${marketIds.join(",")})`} />
+      )}
+
       <Link
         href="/admin/events"
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary"
@@ -385,41 +543,78 @@ export function EventDetailManager({
         <div className="flex flex-col gap-4">
           {markets.map((market) => (
             <div key={market.id} className="card p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="font-medium text-text-primary">{market.name}</p>
                   <p className="text-xs text-text-secondary">
                     {MARKET_TYPES.find((t) => t.value === market.type)?.label ?? market.type} · {market.status}
                     {market.line_value !== null && <> · Line {market.line_value}</>}
+                    {market.selections.length > 0 && <> · {market.selections.length} selections</>}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectionMarketId(market.id);
-                    setSelectionError(null);
-                    setSelectionName("");
-                    setSelectionValue("");
-                    setSelectionOdds("");
-                    setSelectionOutcomeCode("");
-                  }}
-                  className="text-sm font-medium text-gold hover:text-gold-hover"
-                >
-                  + Add selection
-                </button>
+                <div className="flex shrink-0 items-center gap-3">
+                  {isExactScoreMarketType(market.type) ? (
+                    <button
+                      type="button"
+                      onClick={() => setScoreGridMarketId(market.id)}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-gold hover:text-gold-hover"
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                      Add score grid
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectionMarketId(market.id);
+                        setSelectionError(null);
+                        setSelectionName("");
+                        setSelectionValue("");
+                        setSelectionOdds("");
+                        setSelectionOutcomeCode("");
+                      }}
+                      className="text-sm font-medium text-gold hover:text-gold-hover"
+                    >
+                      + Add selection
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => openEditMarket(market)}
+                    className="text-text-secondary hover:text-gold"
+                    aria-label={`Edit ${market.name}`}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteMarketTarget(market);
+                      setDeleteMarketError(null);
+                    }}
+                    className="text-text-secondary hover:text-live"
+                    aria-label={`Delete ${market.name}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
 
               {market.selections.length > 0 && (
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {market.selections.map((s) => (
-                    <li key={s.id} className="pill inline-flex items-center gap-1.5">
+                    <li
+                      key={s.id}
+                      className={`pill inline-flex items-center gap-1.5 ${s.active ? "" : "border-dashed opacity-50"}`}
+                    >
                       {s.name}
-                      {s.value ? ` · ${s.value}` : ""}
+                      {s.value && s.value !== s.name ? ` · ${s.value}` : ""}
                       {s.current_odds !== null ? (
                         <span className="font-mono text-gold">{s.current_odds.toFixed(2)}</span>
                       ) : (
                         <span className="text-text-secondary">unpriced</span>
                       )}
+                      {!s.active && <span className="text-text-secondary">(inactive)</span>}
                       <button
                         type="button"
                         onClick={() => {
@@ -431,6 +626,26 @@ export function EventDetailManager({
                         aria-label={`Adjust odds for ${s.name}`}
                       >
                         <Pencil className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActive(s, market.id)}
+                        disabled={toggleActiveLoadingId === s.id}
+                        className="text-text-secondary hover:text-gold disabled:opacity-50"
+                        aria-label={s.active ? `Deactivate ${s.name}` : `Activate ${s.name}`}
+                      >
+                        {s.active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteSelectionTarget({ selection: s, marketId: market.id });
+                          setDeleteSelectionError(null);
+                        }}
+                        className="text-text-secondary hover:text-live"
+                        aria-label={`Delete ${s.name}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </li>
                   ))}
@@ -626,6 +841,90 @@ export function EventDetailManager({
         {statusError && (
           <p role="alert" className="mb-3 text-sm text-live">
             {statusError}
+          </p>
+        )}
+      </ConfirmDialog>
+
+      {/* Exact Score bulk grid builder */}
+      {scoreGridMarketId && (
+        <ExactScoreGridForm
+          open={scoreGridMarketId !== null}
+          onClose={() => setScoreGridMarketId(null)}
+          marketId={scoreGridMarketId}
+          eventId={event.id}
+          existingScores={
+            (markets.find((m) => m.id === scoreGridMarketId)?.selections ?? [])
+              .map((s) => s.value)
+              .filter((v): v is string => v !== null)
+          }
+          onCreated={(newSelections) =>
+            setMarkets((prev) =>
+              prev.map((m) => (m.id === scoreGridMarketId ? { ...m, selections: [...m.selections, ...newSelections] } : m))
+            )
+          }
+        />
+      )}
+
+      {/* Edit market */}
+      <AdminForm
+        open={editMarketTarget !== null}
+        onClose={() => setEditMarketTarget(null)}
+        title="Edit market"
+        onSubmit={handleEditMarketSubmit}
+        loading={editMarketLoading}
+        error={editMarketError}
+        submitLabel="Save changes"
+      >
+        <FormField label="Market name" type="text" value={editMarketName} onChange={setEditMarketName} required />
+        {editMarketNeedsLine && (
+          <FormField
+            label={editMarketTarget?.type === "OVER_UNDER" ? "Line (e.g. 2.5 total goals)" : "Line (e.g. -1.5 for the favorite)"}
+            type="number"
+            value={editMarketLine}
+            onChange={setEditMarketLine}
+            required
+          />
+        )}
+      </AdminForm>
+
+      {/* Delete market */}
+      <ConfirmDialog
+        open={deleteMarketTarget !== null}
+        title={`Delete "${deleteMarketTarget?.name}"?`}
+        description="This removes the market and all of its selections. Markets with existing bets or predictions can't be deleted — suspend them instead."
+        confirmLabel="Delete market"
+        danger
+        loading={deleteMarketLoading}
+        onConfirm={confirmDeleteMarket}
+        onCancel={() => {
+          setDeleteMarketTarget(null);
+          setDeleteMarketError(null);
+        }}
+      >
+        {deleteMarketError && (
+          <p role="alert" className="mb-3 text-sm text-live">
+            {deleteMarketError}
+          </p>
+        )}
+      </ConfirmDialog>
+
+      {/* Delete selection */}
+      <ConfirmDialog
+        open={deleteSelectionTarget !== null}
+        title={`Delete "${deleteSelectionTarget?.selection.name}"?`}
+        description="Selections with existing bets or predictions can't be deleted — deactivate them instead so they stop taking new bets."
+        confirmLabel="Delete selection"
+        danger
+        loading={deleteSelectionLoading}
+        onConfirm={confirmDeleteSelection}
+        onCancel={() => {
+          setDeleteSelectionTarget(null);
+          setDeleteSelectionError(null);
+        }}
+      >
+        {deleteSelectionError && (
+          <p role="alert" className="mb-3 text-sm text-live">
+            {deleteSelectionError}
           </p>
         )}
       </ConfirmDialog>
